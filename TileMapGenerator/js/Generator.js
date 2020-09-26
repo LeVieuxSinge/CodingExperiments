@@ -18,6 +18,7 @@ class Generator {
         this._endMinRadius = params.endMinRadius !== undefined ? params.endMinRadius : 0;
         this._pathMaxTiles = params.pathMaxTiles !== undefined ? params.pathMaxTiles : 0;
         this._path = [];
+        this._pathDebug = [];
         this._startTile = null;
         this._endTile = null;
 
@@ -31,6 +32,7 @@ class Generator {
 
         // Clear arrays
         this._path = [];
+        this._pathDebug = [];
 
         // Calculate adjacent tiles for each tile.
         this._input.forEach(t => {
@@ -90,8 +92,9 @@ class Generator {
         // start at start
             // select random adjacent tile
             // if the next tile is not path defined
-                // adds it to the path
+                // adds tile to path
                 // set it to path defined
+                // adds two positions as object in path debug
 
     }
 
