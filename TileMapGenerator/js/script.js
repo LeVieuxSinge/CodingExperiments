@@ -18,35 +18,15 @@ const DRAW = new P5_GRAPHIC();
 var tileSheet;
 var generator;
 
-var _colorWhite = {
-  r: 255,
-  g: 255,
-  b: 255,
-  a: 1,
-};
+var _colorWhite = new Color(255, 255, 255, 1);
+var _colorWhat = new Color(255, 0, 255, 1);
+var _colorRed = new Color(255, 0, 0, 1);
+var _colorBlue = new Color(0, 0, 255, 1);
+var _colorBlack = new Color(0, 0, 0, 1);
 
-var _colorWhat = {
-  r: 255,
-  g: 0,
-  b: 255,
-  a: 1,
-}
-
-var _colorRed = {
-  r: 255,
-  g: 0,
-  b: 0,
-  a: 1,
-}
-
-var _colorBlue = {
-  r: 0,
-  g: 0,
-  b: 255,
-  a: 1,
-}
-
+// Setup.
 function setup() {
+
   createCanvas(windowWidth, windowHeight);
 
   // Create tile sheet.
@@ -66,36 +46,39 @@ function setup() {
   generator = new Generator({
     input: tileSheet.getTiles(),
     endMinRadius: TILE_SIZE * 4,
-    pathMaxTiles: 100,
   });
   generator.generate();
 
 }
 
+// Draw.
 function draw() {
+
   background(0);
 
   // Display tiles.
   tileSheet.getTiles().forEach(t => {
     if (t.isPlayable()) {
-      DRAW.rectangle(_colorWhite, t.getPosition().x, t.getPosition().y, TILE_SIZE, TILE_SIZE);
+      DRAW.rectangle(_colorBlack, t.getPosition().x, t.getPosition().y, TILE_SIZE, TILE_SIZE);
+      DRAW.rectangle(_colorWhite, t.getPosition().x, t.getPosition().y, TILE_SIZE - 5, TILE_SIZE - 5);
     } else {
       DRAW.rectangle(_colorWhat, t.getPosition().x, t.getPosition().y, TILE_SIZE, TILE_SIZE);
     }
   });
+
+  // Draw the path from start to end.
+  for (let i = 0; i < generator.getPath().length; i++) {
+    DRAW.rectangle(_colorBlack, generator.getPath()[i].getPosition().x, generator.getPath()[i].getPosition().y, TILE_SIZE, TILE_SIZE);
+  }
+  for (let i = 0; i < generator.getPathDebug().length; i++) {
+    DRAW.line(_colorRed, generator.getPathDebug()[i].p1, generator.getPathDebug()[i].p2, 1);
+  }
 
   // Draw point on starting tile.
   DRAW.circle(_colorRed, generator._startTile.getPosition().x, generator._startTile.getPosition().y, 20);
 
   // Draw point on ending tile.
   DRAW.circle(_colorBlue, generator._endTile.getPosition().x, generator._endTile.getPosition().y, 20);
-
-  // Draw the path from start to end.
-  for (let i = 0; i < generator.getPath().length; i++) {
-    if (generator.getPath()[i + 1] !== undefined) {
-      DRAW.line(_colorRed, generator.getPath()[i], generator.getPath()[i + 1], 1);
-    }
-  }
 
 }
 
@@ -104,6 +87,7 @@ function keyReleased() {
   keyCode === 32 ? generator.generate() : null;
 }
 
+// Resize update.
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   tileSheet.update(width / 2, height / 2);

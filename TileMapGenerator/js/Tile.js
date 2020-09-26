@@ -27,7 +27,6 @@ class Tile {
         // Generator Data
         this._adjacentTiles = [];
         this._surroundingTiles = [];
-        this._pathDefined = false;
 
     }
 
@@ -87,6 +86,10 @@ class Tile {
         }
     }
 
+    getDist(P) {
+        return Math.sqrt(Math.pow(Math.abs(P.y - this._P.y), 2) + Math.pow(Math.abs(P.x - this._P.x), 2));
+    }
+
     getSize() {
         return this._size;
     }
@@ -97,10 +100,6 @@ class Tile {
 
     addAdjacentTile(tile) {
         this._adjacentTiles.push(tile);
-    }
-
-    isPathDefined() {
-        return this._pathDefined;
     }
 
 }

@@ -16,7 +16,6 @@ class Generator {
         // Data
         this._input = params.input !== undefined ? params.input : [];
         this._endMinRadius = params.endMinRadius !== undefined ? params.endMinRadius : 0;
-        this._pathMaxTiles = params.pathMaxTiles !== undefined ? params.pathMaxTiles : 0;
         this._path = [];
         this._pathDebug = [];
         this._startTile = null;
@@ -28,6 +27,7 @@ class Generator {
 
         // Debugging.
         var _defined = 0;
+        var _timerStart = performance.now();
         console.log('Generator Started...');
 
         // Clear arrays
@@ -60,7 +60,7 @@ class Generator {
             if (_bottom !== undefined) {
                 t.addAdjacentTile(_bottom);
             }
-            
+
         });
 
         // Create an array for the playable tiles.
@@ -68,38 +68,60 @@ class Generator {
 
         // Select random start tile.
         this._startTile = _playableTiles[Math.floor(_playableTiles.length * Math.random() | 0)];
-        // Add starting position in path.
-        this._path.push({x: this._startTile.getPosition().x, y: this._startTile.getPosition().y});
 
         // Select random end tile in radius.
         do {
             this._endTile = _playableTiles[Math.floor(_playableTiles.length * Math.random() | 0)];
-            var _dist = int(dist(this._startTile.getPosition().x, this._startTile.getPosition().y, this._endTile.getPosition().x, this._startTile.getPosition().y));
+            var _dist = this._startTile.getDist(this._endTile.getPosition());
         } while (_dist < this._endMinRadius);
 
+        // Add starting tile to path. CANNOT START IN THE MIDDLE ?
+        this._path.push(this._startTile);
+
         // Generate a path from starting point to end point.
-        var _pathCounter = 0;
         var _currentTile = this._startTile;
         do {
+            // Get only adjacent playable tiles.
             var _currentPlayables = _currentTile.getAdjacentTiles().filter(t => t.isPlayable());
-            var _nextTile = _currentPlayables[Math.floor(_currentPlayables.length * Math.random() | 0)];
-            if (this._path.find(p => _nextTile.comparePosition(p)) === undefined) {
-                this._path.push(_nextTile.getPosition());
-            }
-            _currentTile = _nextTile;
-        } while (!_nextTile.comparePosition(this._endTile.getPosition()));
 
-        // start at start
-            // select random adjacent tile
-            // if the next tile is not path defined
-                // adds tile to path
-                // set it to path defined
-                // adds two positions as object in path debug
+            // Select random tile from playables.
+            var _nextTile = _currentPlayables[Math.floor(_currentPlayables.length * Math.random() | 0)];
+
+            // Tile is not already path.
+            if (this._path.find(t => t.comparePosition(_nextTile.getPosition())) === undefined) {
+                // Add to path array.
+                this._path.push(_nextTile);
+                // Add draw debug line position.
+                this._pathDebug.push({
+                    p1: _currentTile.getPosition(),
+                    p2: _nextTile.getPosition(),
+                });
+                // Set next tile as current.
+                _currentTile = _nextTile;
+            } else {
+                // Select random tile from path.
+                // _currentTile = this._path[Math.floor(this._path.length * Math.random() | 0)];
+                // Select closest tile from end.
+                this._path.forEach(t => {
+                    if (t.getDist(this._endTile.getPosition()) < _currentTile.getDist(this._endTile.getPosition())) {
+                        _currentTile = t;
+                    }
+                });
+            }
+        } while (!_currentTile.comparePosition(this._endTile.getPosition()));
+
+        // Debugging.
+        var _timerEnd = performance.now();
+        console.log('Map generated in ' + Math.round(((_timerEnd - _timerStart) + Number.EPSILON) * 100) / 100 + ' milliseconds! ');
 
     }
 
     getPath() {
         return this._path;
+    }
+
+    getPathDebug() {
+        return this._pathDebug;
     }
 
 }
