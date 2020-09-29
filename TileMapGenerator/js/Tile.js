@@ -12,11 +12,11 @@
 class Tile {
 
     constructor(params) {
-        
+
         // Data
         this._index = params.index !== undefined ? params.index : null;
-        this._status = params.state !== undefined ? params.state : "undefined";
-        this._type = params.type !== undefined ? params.type : "undefined"; // start, end, terrain, pit, housing
+        this._defined = params.state !== undefined ? params.state : false;
+        this._type = params.type !== undefined ? params.type : "undefined"; // start, end, street, pit, housing
         this._playable = params.playable !== undefined ? params.playable : false;
         this._P = params.P !== undefined ? params.P : {
             x: 0,
@@ -30,54 +30,74 @@ class Tile {
 
     }
 
-    getIndex() {
+    getIndex() {
         return this._index;
     }
 
-    getStatus() {
+    isDefined() {
         return this._status;
     }
 
-    setStatus(status) {
-        this._status = status;
+    setDefined() {
+        this._defined = true;
     }
 
     isPlayable() {
         return this._playable;
     }
 
+    // Positions
     getPosition() {
         return this._P;
     }
-
     getRightPosition() {
         return {
             x: this._P.x + this._size,
             y: this._P.y,
         };
     }
-
     getLeftPosition() {
         return {
             x: this._P.x - this._size,
             y: this._P.y,
         };
     }
-
     getTopPosition() {
         return {
             x: this._P.x,
             y: this._P.y + this._size,
         };
     }
-
     getBottomPosition() {
         return {
             x: this._P.x,
             y: this._P.y - this._size,
         };
     }
-
+    getTopRightPosition() {
+        return {
+            x: this._P.x + this._size,
+            y: this._P.y + this._size,
+        };
+    }
+    getTopLeftPosition() {
+        return {
+            x: this._P.x - this._size,
+            y: this._P.y + this._size,
+        };
+    }
+    getBottomRightPosition() {
+        return {
+            x: this._P.x + this._size,
+            y: this._P.y - this._size,
+        };
+    }
+    getBottomLeftPosition() {
+        return {
+            x: this._P.x - this._size,
+            y: this._P.y - this._size,
+        };
+    }
     comparePosition(P) {
         if (this._P.x === P.x && this._P.y === P.y) {
             return true;
@@ -95,11 +115,19 @@ class Tile {
     }
 
     getAdjacentTiles() {
-        return this._adjacentTiles;  
+        return this._adjacentTiles;
     }
 
     addAdjacentTile(tile) {
         this._adjacentTiles.push(tile);
+    }
+
+    getSurroundingTiles() {
+        return this._surroundingTiles;
+    }
+
+    addSurroundingTile(tile) {
+        this._surroundingTiles.push(tile);
     }
 
 }

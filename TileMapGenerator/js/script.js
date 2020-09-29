@@ -9,9 +9,11 @@
 
 'use strict';
 
-const TILE_SHEET_ROWS = 12;
-const TILE_SHEET_COLUMNS = 12;
-const TILE_SIZE = 50;
+const TILE_SHEET_ROWS = 24;
+const TILE_SHEET_COLUMNS = 24;
+const TILE_SIZE = 20;
+const END_MIN_RADIUS = TILE_SIZE * 11;
+const PATH_MIN_TILE = 80;
 
 const DRAW = new P5_GRAPHIC();
 
@@ -45,7 +47,8 @@ function setup() {
   // Create generator.
   generator = new Generator({
     input: tileSheet.getTiles(),
-    endMinRadius: TILE_SIZE * 4,
+    endMinRadius: END_MIN_RADIUS,
+    pathMinTile: PATH_MIN_TILE,
   });
   generator.generate();
 

@@ -9,13 +9,29 @@
 
 'use strict';
 
-class P {
+class Vector2 {
 
     constructor(x, y) {
 
         // Public
         this.x = x !== undefined ? x : 0;
         this.y = y !== undefined ? y : 0;
+    }
+
+    getDist(P) {
+        return Math.sqrt(Math.pow(Math.abs(P.y - this.y), 2) + Math.pow(Math.abs(P.x - this.x), 2));
+    }
+
+}
+
+class Vector3 {
+
+    constructor(x, y, z) {
+
+        // Public
+        this.x = x !== undefined ? x : 0;
+        this.y = y !== undefined ? y : 0;
+        this.z = z !== undefined ? z : 0;
     }
 
     getDist(P) {

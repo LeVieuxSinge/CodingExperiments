@@ -1,0 +1,15 @@
+Tilesheet:
+
+
+Tile:
+    - index
+    - used = true or false
+    - playable = true or false
+    - canBePlayable = true or false
+    - category = street, other
+    - type = (start, end, street), (housing, hole, pillars)
+    - rotation = 0 to 360 (starting at top, rotating towards the right)
+    - P
+    - size
+    - ajacentTiles = []
+    - surroundingTiles = all tiles in range (tile size * 1.5)
