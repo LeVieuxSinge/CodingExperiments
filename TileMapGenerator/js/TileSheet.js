@@ -17,10 +17,7 @@ class TileSheet {
         this._rows = params.rows !== undefined ? params.rows : 10;
         this._columns = params.columns !== undefined ? params.columns : 10;
         this._tileSize = params.tileSize !== undefined ? params.tileSize : 50;
-        this._P = params.P !== undefined ? params.P : {
-            x: 0,
-            y: 0,
-        };
+        this._P = params.P !== undefined ? params.P : new Vector2(0, 0);
 
         // Ouput
         this._output = [];
@@ -60,7 +57,6 @@ class TileSheet {
         for (var y = 0; y < this._rows; y++) {
             for (var x = 0; x < this._columns; x++) {
 
-
                 // Create new position for tile.
                 var _position = {
                     x: this._tileSize * x,
@@ -83,11 +79,8 @@ class TileSheet {
                 // Add tile to output.
                 this._output.push(new Tile({
                     index: _nextIndex,
-                    playable: _playable,
-                    P: {
-                        x: _position.x,
-                        y: _position.y,
-                    },
+                    canBePlayable: _playable,
+                    P: new Vector2(_position.x, _position.y),
                     size: this._tileSize,
                 }));
 
@@ -97,10 +90,15 @@ class TileSheet {
             }
         }
 
+        // Compute adjacent and surrounding tiles.
+        this._output.forEach(t => {
+            t.computeNeighbours(this._output);
+        });
+
         // Displace tile sheet to tile sheet position inputs.
         this._output.forEach(t => {
-            t._P.x += this._P.x;
-            t._P.y += this._P.y;
+            t.getPosition().x += this._P.x;
+            t.getPosition().y += this._P.y;
         });
 
         // Debugging.

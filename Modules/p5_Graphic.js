@@ -23,6 +23,16 @@ class P5_GRAPHIC {
         ellipse(x, y, diameter, diameter);
         pop();
     }
+    
+    image(img, x, y, width, height, rotation) {
+        push();
+        translate(x, y)
+        angleMode(DEGREES);
+        rotate(rotation);
+        imageMode(CENTER);
+        image(img, 0, 0, width, height);
+        pop();
+    }
 
     line(color, P1, P2, weigth) {
         push();
@@ -38,6 +48,14 @@ class P5_GRAPHIC {
         fill('rgba(' + color.r + ', ' + color.g + ', ' + color.b + ', ' + color.a + ')');
         rectMode(CENTER);
         rect(x, y, width, height);
+        pop();
+    }
+
+    text(text, color, x, y, size) {
+        push();
+        textSize(size);
+        fill('rgba(' + color.r + ', ' + color.g + ', ' + color.b + ', ' + color.a + ')');
+        text(text, x, y);
         pop();
     }
 

@@ -16,10 +16,19 @@ class Vector2 {
         // Public
         this.x = x !== undefined ? x : 0;
         this.y = y !== undefined ? y : 0;
+
     }
 
-    getDist(P) {
-        return Math.sqrt(Math.pow(Math.abs(P.y - this.y), 2) + Math.pow(Math.abs(P.x - this.x), 2));
+    dist(Vector2) {
+        return Math.sqrt(Math.pow(Math.abs(this.y - Vector2.y), 2) + Math.pow(Math.abs(this.x - Vector2.x), 2));
+    }
+
+    compare(Vector2) {
+        if (this.x === Vector2.x && this.y === Vector2.y) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
 }
@@ -32,10 +41,7 @@ class Vector3 {
         this.x = x !== undefined ? x : 0;
         this.y = y !== undefined ? y : 0;
         this.z = z !== undefined ? z : 0;
-    }
 
-    getDist(P) {
-        return Math.sqrt(Math.pow(Math.abs(P.y - this.y), 2) + Math.pow(Math.abs(P.x - this.x), 2));
     }
 
 }
