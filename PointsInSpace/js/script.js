@@ -14,6 +14,8 @@ const PT_SIZE = 5;
 const PT_SPEEDMIN = 1;
 const PT_SPEEDMAX = 8;
 
+const DRAW = new P5_GRAPHIC();
+
 var emitter;
 
 function setup() {
@@ -88,6 +90,6 @@ function draw() {
   // Draw points
   emitter._pts.forEach(e => {
     e.color.a = map(e.speed.base, PT_SPEEDMIN, PT_SPEEDMAX, 0, 1);
-    Draw.circle(e.color, e.pos.x, e.pos.y, e.scale);
+    DRAW.circle(e.color, e.pos.x, e.pos.y, e.scale);
   });
 }
