@@ -75,9 +75,18 @@ class BehaviorClass {
         }
         // Chase potential if there is one
         else {
-            // Decided whether it's goind to chasing or not depending on confidence
-            if (Math.random() < probability) {
-                this._state = Codex.states.chasing;
+            // Make sure potential still exists
+            if (Data.retrieveCells().find(cell => cell.getIndex() === this._potential) !== undefined) {
+                // Decided whether it's goind to chasing or not depending on confidence
+                if (Math.random() < probability) {
+                    this._state = Codex.states.chasing;
+                }
+            }
+            else {
+                // Remove potential
+                this._potential = null;
+                // Change state
+                this._state = Codex.states.idle;
             }
         }
 

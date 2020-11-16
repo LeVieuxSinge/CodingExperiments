@@ -28,7 +28,7 @@ class SystemClass {
         // if input !== '' -> for each character, create cell and set required and potential to next character. Delete character from string each time.
 
         // Create new cells if needed (Probability: 2%)
-        if (data.length < 50 && Math.random() < 0.02) {
+        if (data.length < 100 && Math.random() < 0.02) {
             var cell = this.newCell();
             cell.generate();
             data.push(cell);
