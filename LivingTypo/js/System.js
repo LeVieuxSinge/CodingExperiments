@@ -28,17 +28,22 @@ class SystemClass {
         // if input !== '' -> for each character, create cell and set required and potential to next character. Delete character from string each time.
 
         // Create new cells if needed (Probability: 2%)
-        if (data.length < 10 && Math.random() < 0.02) {
+        if (data.length < 50 && Math.random() < 0.02) {
             var cell = this.newCell();
             cell.generate();
             data.push(cell);
-            console.log(data);
+            // console.log(data);
         }
 
-        // Move the cells
+        // Update the cells
         data.forEach(cell => {
             cell.evaluate();
             cell.move();
+            if (cell.needIndexUpdate()) {
+                cell.updateIndex(this._cellID);
+                // Increment cell IDs
+                this._cellID++;
+            }
         });
 
         // Store data

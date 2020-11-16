@@ -14,6 +14,7 @@ class CellClass {
     constructor(index) {
 
         this._index = index;
+        this._needIndexUpdate = false;
         this._content = '';
         this._instance = '';
         this._type = '';
@@ -74,15 +75,14 @@ class CellClass {
             // Target rules depends if wanting to create a word or a sentence
             if (this._instance === Codex.instances.character) {
                 this._rule = Dictionnary.getWordRule();
-            }
-            else if (this._instance === Codex.instances.word) {
+            } else if (this._instance === Codex.instances.word) {
                 this._rule = Dictionnary.getSentenceRule();
             }
 
         }
 
         // Evaluate behavior according to given structure and rule
-        this._behavior.evaluate(this._structure, this._rule);
+        this._behavior.evaluate(this._index, this._structure, this._rule);
 
     }
 
@@ -95,6 +95,8 @@ class CellClass {
         }
         // Roaming
         else if (this._behavior.getState() === Codex.states.roaming) {
+            // Set speed
+            this._speed = 1;
             // 20% chance of new position
             if (Math.random() < 0.01) {
                 this._targetP = randomPositionInRange();
@@ -105,10 +107,20 @@ class CellClass {
         }
         // Chasing
         else if (this._behavior.getState() === Codex.states.chasing) {
-            this._targetP = Data.retrieveCells().find(cell => cell.index = this._behavior.getPotential());
-            var direction = directionToTarget(this._P, this._targetP);
-            this._v.x = this._speed * direction.x;
-            this._v.y = this._speed * direction.y;
+            var targetCell = Data.retrieveCells().find(cell => cell.getIndex() === this._behavior.getPotential());
+            if (targetCell !== undefined) {
+                // Set speed
+                this._speed = 1.1;
+                // Chase potential
+                this._targetP = targetCell.getPosition();
+                var direction = directionToTarget(this._P, this._targetP);
+                this._v.x = this._speed * direction.x;
+                this._v.y = this._speed * direction.y;
+                // Within range of potential
+                if (this._P.dist(this._targetP) < 5) {
+                    this.capturedPotential(targetCell);
+                }
+            }
         }
 
         // Update position
@@ -118,22 +130,58 @@ class CellClass {
         // Constraint inside window area
         if (this._P.x < 0) {
             this._P.x = 0;
-        }
-        else if (this._P.x > window.innerWidth) {
+        } else if (this._P.x > window.innerWidth) {
             this._P.x = window.innerWidth;
-        }
-        else if (this._P.y < 0) {
+        } else if (this._P.y < 0) {
             this._P.y = 0;
-        }
-        else if (this._P.y > window.innerHeight) {
+        } else if (this._P.y > window.innerHeight) {
             this._P.y = window.innerHeight;
         }
 
     }
 
+    capturedPotential(potential) {
+        // Merge content
+        this._content += potential.getContent();
+        // Merge structure
+        this._structure += potential.getStructure()
+        // Update behavior required
+        this._behavior.capturedPotential(potential.getStructure());
+        // Check if required is fullfill
+        if (this._behavior.requiredComplete()) {
+
+        }
+        // Remove potential from all other cells
+        Data.retrieveCells().forEach(cell => {
+            if (cell.getBehavior().getPotential() === potential.getIndex()) {
+                cell.getBehavior().lostPotential();
+            }
+        });
+        // Delete cell
+        var data = Data.retrieveCells();
+        var index = data.indexOf(potential);
+        data.splice(index, 1);
+        Data.storeCells(data);
+        // Ask system for index update
+        this._needIndexUpdate = true;
+        // Ouput content
+        console.log(this._content);
+    }
+
     getIndex() {
         // Return index
         return this._index;
+    }
+
+    updateIndex(number) {
+        // Update index
+        this._index = number;
+        this._needIndexUpdate = false;
+    }
+
+    needIndexUpdate() {
+        // Return need index update
+        return this._needIndexUpdate;
     }
 
     getContent() {
