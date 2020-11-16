@@ -9,6 +9,10 @@
 
 'use strict';
 
+// Version
+const Version = '1.0.4';
+console.log('LivingTypo Version ' + Version);
+
 // Constants
 const Draw = new P5_GRAPHIC();
 const Data = new DataClass();
