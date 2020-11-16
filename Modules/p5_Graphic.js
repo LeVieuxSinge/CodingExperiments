@@ -51,11 +51,11 @@ class P5_GRAPHIC {
         pop();
     }
 
-    text(text, color, x, y, size) {
+    text(content, color, x, y, size) {
         push();
         textSize(size);
         fill('rgba(' + color.r + ', ' + color.g + ', ' + color.b + ', ' + color.a + ')');
-        text(text, x, y);
+        text(content, x, y);
         pop();
     }
 
