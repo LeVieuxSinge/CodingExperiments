@@ -13,23 +13,22 @@ class SystemClass {
 
     constructor() {
         
-        // Data
-        this._cellID = 0;
         this._input = '';
+        this._maxCells = 100;
 
     }
 
     update() {
 
-        // Parses the system and updates it if necessary
         // Retrieve data
         var data = Data.retrieveCells();
 
         // if input !== '' -> for each character, create cell and set required and potential to next character. Delete character from string each time.
 
         // Create new cells if needed (Probability: 2%)
-        if (data.length < 100 && Math.random() < 0.02) {
-            var cell = this.newCell();
+        if (data.length < this._maxCells && Math.random() < 0.02) {
+            // Constructs a new cell
+            var cell = new CellClass(Data.getHash());
             cell.generate();
             data.push(cell);
             // console.log(data);
@@ -38,26 +37,10 @@ class SystemClass {
         // Update the cells
         data.forEach(cell => {
             cell.evaluate();
-            cell.move();
-            if (cell.needIndexUpdate()) {
-                cell.updateIndex(this._cellID);
-                // Increment cell IDs
-                this._cellID++;
-            }
         });
 
         // Store data
         Data.storeCells(data);
-
-    }
-
-    newCell() {
-
-        // Constructs a new cell
-        var cell = new CellClass(this._cellID);
-        // Increment cell IDs
-        this._cellID++;
-        return cell;
 
     }
 

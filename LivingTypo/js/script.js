@@ -10,7 +10,7 @@
 'use strict';
 
 // Version
-const Version = '1.0.4';
+const Version = '1.0.5';
 console.log('LivingTypo Version ' + Version);
 
 // Constants
@@ -50,4 +50,11 @@ function draw() {
 // Resize update.
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
+}
+
+// On input
+function input(value) {
+    if (value !== '') {
+        console.log(value);
+    }
 }

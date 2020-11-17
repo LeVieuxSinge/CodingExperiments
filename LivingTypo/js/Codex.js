@@ -33,7 +33,7 @@ class CodexClass {
             verb: 'verb',
             adjective: 'adjective',
         };
-        this.structure = {
+        this.structures = {
             vowel: 'v',
             consonant: 'c',
             number: 'n',
@@ -57,63 +57,74 @@ class CodexClass {
             content: '',
             instance: Codex.instances.character,
             type: '',
-            structure: ''
+            structure: '',
         };
 
         // Random probability
         var random = Math.random();
 
-        // 40% chance of vowel
-        if (random < 0.4) {
-            character.content = this.randomVowel();
+        // 50% chance of vowel
+        if (random < 0.5) {
+            character.content = this._vowels[Math.floor(Math.random() * this._vowels.length)];
             character.type = this.types.vowel;
-            character.structure = this.structure.vowel;
+            character.structure = this.structures.vowel;
         }
         // 50% chance of consonant
-        else if (random < 0.9) {
-            character.content = this.randomConsonant();
+        else if (random < 1.0) {
+            character.content = this._consonants[Math.floor(Math.random() * this._consonants.length)];
             character.type = this.types.consonant;
-            character.structure = this.structure.consonant;
+            character.structure = this.structures.consonant;
         }
-        // 9% chance of number
-        else if (random < 0.99) {
-            character.content = this.randomNumber();
-            character.type = this.types.number;
-            character.structure = this.structure.number;
-        }
-        // 1% chance of symbol
-        else {
-            character.content = this.randomSymbol();
-            character.type = this.types.symbol;
-            character.structure = this.structure.symbol;
-        }
+
+
+        /**
+         * REMOVED BECAUSE WASN'T FEELING RIGHT
+         */
+
+        // // 9% chance of number
+        // else if (random < 0.99) {
+        //     character.content = this._numbers[Math.floor(Math.random() * this._numbers.length)];
+        //     character.type = this.types.number;
+        //     character.structure = this.structures.number;
+        // }
+        // // 1% chance of symbol
+        // else {
+        //     character.content = this._symbols[Math.floor(Math.random() * this._symbols.length)];
+        //     character.type = this.types.symbol;
+        //     character.structure = this.structures.symbol;
+        // }
+
+
         return character;
 
     }
 
-    randomLetter() {
-        // Return random character from letters
-        return this._letters[Math.floor(Math.random() * this._letters.length)];
-    }
+    randomWordType() {
 
-    randomVowel() {
-        // Return random character from vowels
-        return this._vowels[Math.floor(Math.random() * this._vowels.length)];
-    }
+        // Return random word type and structure
+        var word = {
+            type: '',
+            structure: '',
+        }
+        var random = Math.random();
+        // 30% chance of noun
+        if (random < 0.3) {
+            word.type = this.types.noun;
+            word.structure = this.structures.noun;
+        }
+        // 30% chance of verb
+        else if (random < 0.6) {
+            word.type = this.types.verb;
+            word.structure = this.structures.verb;
+        }
+        // 40% chance of adjective
+        else {
+            word.type = this.types.adjective;
+            word.structure = this.structures.adjective;
+        }
 
-    randomConsonant() {
-        // Return random character from consonants
-        return this._consonants[Math.floor(Math.random() * this._consonants.length)];
-    }
+        return word;
 
-    randomNumber() {
-        // Return random character from numbers
-        return this._numbers[Math.floor(Math.random() * this._numbers.length)];
-    }
-
-    randomSymbol() {
-        // Return random character from symbols
-        return this._symbols[Math.floor(Math.random() * this._symbols.length)];
     }
 
     getCharacterTypeFromString(string = '') {
@@ -141,19 +152,19 @@ class CodexClass {
         // Return structure letter from type
         // Vowel
         if (string === Codex.types.vowel) {
-            return Codex.structure.vowel;
+            return Codex.structures.vowel;
         }
         // Consonant
         else if (string === Codex.types.consonant) {
-            return Codex.structure.consonant;
+            return Codex.structures.consonant;
         }
         // Number
         else if (string === Codex.types.number) {
-            return Codex.structure.number;
+            return Codex.structures.number;
         }
         // Symbol
         else if (string === Codex.types.symbol) {
-            return Codex.structure.symbol;
+            return Codex.structures.symbol;
         }
     }
 

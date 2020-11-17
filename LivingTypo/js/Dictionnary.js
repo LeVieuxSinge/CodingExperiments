@@ -19,9 +19,9 @@ class DictionnaryClass {
 
     }
 
-    addWord(string) {
+    addWord(type, structure, content) {
         // Push word in dictionnary
-        this._words.push(string);
+        this._words.push({type: type, structure: structure, content: content});
     }
 
     getWords() {
@@ -41,22 +41,27 @@ class DictionnaryClass {
             var constructedRule = '';
             for (var i = 0; i < amountCharacters; i++) {
                 var random = Math.random();
-                // 40% chance of vowel
-                if (random < 0.4) {
-                    constructedRule += Codex.structure.vowel;
+                // 50% chance of vowel
+                if (random < 0.5) {
+                    constructedRule += Codex.structures.vowel;
                 }
                 // 50% chance of consonant
-                else if (random < 0.9) {
-                    constructedRule += Codex.structure.consonant;
+                else if (random < 1.0) {
+                    constructedRule += Codex.structures.consonant;
                 }
-                // 9% chance of number
-                else if (random < 0.99) {
-                    constructedRule += Codex.structure.number;
-                }
-                // 1% chance of symbol
-                else {
-                    constructedRule += Codex.structure.symbol;
-                }
+
+                /**
+                * REMOVED BECAUSE WASN'T FEELING RIGHT
+                */
+
+                // // 9% chance of number
+                // else if (random < 0.99) {
+                //     constructedRule += Codex.structures.number;
+                // }
+                // // 1% chance of symbol
+                // else {
+                //     constructedRule += Codex.structures.symbol;
+                // }
             }
             // Add to word rule dictionnary
             this._wordRules.push(constructedRule);
@@ -76,7 +81,7 @@ class DictionnaryClass {
         // Return a new or old rule
         var rule = null;
         // Decide whether to return an old or new one based on the amount if rules existing for this instance (Exponential function)
-        var probability = 0.95 ** this._sentenceRules;
+        var probability = 0.95 ** this._sentenceRules.length;
         // Generate one
         if (Math.random() < probability) {
             // Random amount of words
@@ -86,15 +91,15 @@ class DictionnaryClass {
                 var random = Math.random();
                 // 30% chance of noun
                 if (random < 0.3) {
-                    constructedRule.concat(Codex.structure.noun);
+                    constructedRule += Codex.structures.noun;
                 }
                 // 30% chance of verb
                 else if (random < 0.6) {
-                    constructedRule.concat(Codex.structure.verb);
+                    constructedRule += Codex.structures.verb;
                 }
                 // 40% chance of adjective
                 else {
-                    constructedRule.concat(Codex.structure.adjective);
+                    constructedRule += Codex.structures.adjective;
                 }
             }
             // Add to sentence rule dictionnary

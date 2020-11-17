@@ -14,6 +14,7 @@ class DataClass {
     constructor() {
         
         this._cells = [];
+        this._hash = -1;
 
     }
 
@@ -25,6 +26,12 @@ class DataClass {
     storeCells(cells) {
         // Set cells
         this._cells = cells;
+    }
+
+    getHash() {
+        // Return hash
+        this._hash++;
+        return this._hash;
     }
 
 }

@@ -14,7 +14,6 @@ class CellClass {
     constructor(index) {
 
         this._index = index;
-        this._needIndexUpdate = false;
         this._content = '';
         this._instance = '';
         this._type = '';
@@ -38,10 +37,14 @@ class CellClass {
             // Get random character and type
             var character = Codex.randomCharacter();
 
+            /**
+            * REMOVED BECAUSE WASN'T FEELING RIGHT
+            */
+
             // 10% chance of uppercase
-            if (Math.random() < 0.1) {
-                character.content = character.content.toUpperCase();
-            }
+            // if (Math.random() < 0.1) {
+            //     character.content = character.content.toUpperCase();
+            // }
 
             // Set attributes
             this._content = character.content;
@@ -64,25 +67,21 @@ class CellClass {
 
     evaluate() {
 
-        // Evaluate the cell and set instance, type and structure based on content
-        if (this._instance === Codex.instances.character) {
-
-        }
-
         // Establish a following rule if there aren't any aleady set
         if (this._rule === null) {
-
             // Target rules depends if wanting to create a word or a sentence
             if (this._instance === Codex.instances.character) {
                 this._rule = Dictionnary.getWordRule();
             } else if (this._instance === Codex.instances.word) {
                 this._rule = Dictionnary.getSentenceRule();
             }
-
         }
 
-        // Evaluate behavior according to given structure and rule
+        // Evaluate behavior according to given index, structure and rule
         this._behavior.evaluate(this._index, this._structure, this._rule);
+
+        // Move
+        this.move();
 
     }
 
@@ -91,13 +90,14 @@ class CellClass {
         // Move the cell according to its behavior
         // Idle
         if (this._behavior.getState() === Codex.states.idle) {
-            this._targetP = this._P;
+            this._v.x = clampNumberInRange(Math.random(), 0, 1, -0.01, 0.01);
+            this._v.y = clampNumberInRange(Math.random(), 0, 1, -0.01, 0.01);
         }
         // Roaming
         else if (this._behavior.getState() === Codex.states.roaming) {
             // Set speed
             this._speed = 1;
-            // 20% chance of new position
+            // 1% chance of new position
             if (Math.random() < 0.01) {
                 this._targetP = randomPositionInRange();
                 var direction = directionToTarget(this._P, this._targetP);
@@ -110,7 +110,7 @@ class CellClass {
             var targetCell = Data.retrieveCells().find(cell => cell.getIndex() === this._behavior.getPotential());
             if (targetCell !== undefined) {
                 // Set speed
-                this._speed = 1.1;
+                this._speed = 1.3;
                 // Chase potential
                 this._targetP = targetCell.getPosition();
                 var direction = directionToTarget(this._P, this._targetP);
@@ -118,7 +118,7 @@ class CellClass {
                 this._v.y = this._speed * direction.y;
                 // Within range of potential
                 if (this._P.dist(this._targetP) < 5) {
-                    this.capturedPotential(targetCell);
+                    this.merge(targetCell);
                 }
             }
         }
@@ -140,48 +140,80 @@ class CellClass {
 
     }
 
-    capturedPotential(potential) {
+    merge(target) {
+
         // Merge content
-        this._content += potential.getContent();
+        // If character, simply merge it
+        if (this._instance === Codex.instances.character) {
+            this._content += target.getContent();
+        }
+        // If word, add space before merging
+        else if (this._instance === Codex.instances.word) {
+            this._content += ' ' + target.getContent();
+        }
         // Merge structure
-        this._structure += potential.getStructure()
+        this._structure += target.getStructure()
         // Update behavior required
-        this._behavior.capturedPotential(potential.getStructure());
+        this._behavior.capturedPotential(target.getStructure());
         // Check if required is fullfill
         if (this._behavior.requiredComplete()) {
-
+            // If is a character becoming a word
+            if (this._instance === Codex.instances.character) {
+                // Cell is now a word
+                this._instance = Codex.instances.word;
+                // Make sure word isn't already defined
+                var definedWord = Dictionnary.getWords().find(word => word.content === this._content);
+                if (definedWord !== undefined) {
+                    this._type = definedWord.type;
+                    this._structure = definedWord.structure;
+                }
+                // Get random word type and structure
+                else {
+                    var word = Codex.randomWordType();
+                    this._type = word.type;
+                    this._structure = word.structure;
+                    // Add word to dictionnary
+                    Dictionnary.addWord(this._type, this._structure, this._content);
+                }
+                // Reset rule
+                this._rule = null;
+                // Reset behavior required
+                this._behavior.resetRequired();
+                // Print word
+                console.log('word: ' + this._content);
+            }
+            // If is a word becoming a sentence
+            else if (this._instance === Codex.instances.word) {
+                // Cell is now a sentence
+                this._instance = Codex.instances.sentence;
+                // Reset type
+                this._type = '';
+                // Reset rule
+                this._rule = null;
+                // Reset behavior required
+                this._behavior.resetRequired();
+                // Print sentence
+                console.log('sentence: ' + this._content);
+            }
         }
         // Remove potential from all other cells
         Data.retrieveCells().forEach(cell => {
-            if (cell.getBehavior().getPotential() === potential.getIndex()) {
+            if (cell.getBehavior().getPotential() === target.getIndex()) {
                 cell.getBehavior().lostPotential();
             }
         });
-        // Delete cell
+        // Delete target cell
         var data = Data.retrieveCells();
-        var index = data.indexOf(potential);
+        var index = data.indexOf(target);
         data.splice(index, 1);
         Data.storeCells(data);
-        // Ask system for index update
-        this._needIndexUpdate = true;
-        // Ouput content
-        console.log(this._content);
+        // Update index
+        this._index = Data.getHash();
     }
 
     getIndex() {
         // Return index
         return this._index;
-    }
-
-    updateIndex(number) {
-        // Update index
-        this._index = number;
-        this._needIndexUpdate = false;
-    }
-
-    needIndexUpdate() {
-        // Return need index update
-        return this._needIndexUpdate;
     }
 
     getContent() {

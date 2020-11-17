@@ -9,6 +9,56 @@
 
 'use strict';
 
+class Color {
+
+    constructor(r, g, b, a) {
+
+        // Public
+        this.r = r !== undefined ? r : 255;
+        this.g = g !== undefined ? g : 255;
+        this.b = b !== undefined ? b : 255;
+        this.a = a !== undefined ? a : 1;
+    }
+
+}
+
+class Vector2 {
+
+    constructor(x, y) {
+
+        // Public
+        this.x = x !== undefined ? x : 0;
+        this.y = y !== undefined ? y : 0;
+
+    }
+
+    dist(Vector2) {
+        return Math.sqrt(Math.pow(Math.abs(this.y - Vector2.y), 2) + Math.pow(Math.abs(this.x - Vector2.x), 2));
+    }
+
+    compare(Vector2) {
+        if (this.x === Vector2.x && this.y === Vector2.y) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+}
+
+class Vector3 {
+
+    constructor(x, y, z) {
+
+        // Public
+        this.x = x !== undefined ? x : 0;
+        this.y = y !== undefined ? y : 0;
+        this.z = z !== undefined ? z : 0;
+
+    }
+
+}
+
 /**
  * Returns a random Vector2 in range
  * @param {*} x 
