@@ -55,6 +55,8 @@ function windowResized() {
 // On input
 function input(value) {
     if (value !== '') {
-        console.log(value);
+        System.setInput(value);
+        // Reset input
+        document.getElementById('input').value = '';
     }
 }

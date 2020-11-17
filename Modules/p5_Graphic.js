@@ -55,6 +55,7 @@ class P5_GRAPHIC {
         push();
         textSize(size);
         fill('rgba(' + color.r + ', ' + color.g + ', ' + color.b + ', ' + color.a + ')');
+        textAlign(CENTER, CENTER);
         text(content, x, y);
         pop();
     }

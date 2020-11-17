@@ -41,11 +41,11 @@ class DictionnaryClass {
             var constructedRule = '';
             for (var i = 0; i < amountCharacters; i++) {
                 var random = Math.random();
-                // 50% chance of vowel
-                if (random < 0.5) {
+                // 40% chance of vowel
+                if (random < 0.4) {
                     constructedRule += Codex.structures.vowel;
                 }
-                // 50% chance of consonant
+                // 60% chance of consonant
                 else if (random < 1.0) {
                     constructedRule += Codex.structures.consonant;
                 }

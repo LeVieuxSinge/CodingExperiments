@@ -19,6 +19,9 @@ class CodexClass {
         this._numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
         this._symbols = ['\'', '\.', '\"', '\-', '\!', '\?', '\(', '\)', '\:', '\;'];
 
+        // Statements from https://www.philosophybasics.com/general_quotes.html
+        this._statements = ['The unexamined life is not worth living', 'Whereof one cannot speak, thereof one must be silent', 'Entities should not be multiplied unnecessarily', 'The life of man is solitary, poor, nasty, brutish, and short','I think therefore I am', 'He who thinks great thoughts, often makes great errors', 'We live in the best of all possible worlds', 'What is rational is actual and what is actual is rational', 'God is dead! He remains dead! And we have killed him', 'There is but one truly serious philosophical problem, and that is suicide', 'One cannot step twice in the same river', 'The greatest happiness of the greatest number is the foundation of morals and legislation', 'To be is to be perceived', 'Happiness is not an ideal of reason but of imagination', 'No man\'s knowledge here can go beyond his experience', 'God is not willing to do everything, and thus take away our free will and that share of glory which belongs to us', 'Liberty consists in doing what one desires', 'It is undesirable to believe a proposition when there is no ground whatever for supposing it true', 'Even while they teach, men learn', 'There is only one good, knowledge, and one evil, ignorance', 'If God did not exist, it would be necessary to invent Him', 'This is patently absurd; but whoever wishes to become a philosopher must learn not to be frightened by absurdities'];
+
         this.instances = {
             character: 'character',
             word: 'word',
@@ -63,13 +66,13 @@ class CodexClass {
         // Random probability
         var random = Math.random();
 
-        // 50% chance of vowel
-        if (random < 0.5) {
+        // 40% chance of vowel
+        if (random < 0.4) {
             character.content = this._vowels[Math.floor(Math.random() * this._vowels.length)];
             character.type = this.types.vowel;
             character.structure = this.structures.vowel;
         }
-        // 50% chance of consonant
+        // 60% chance of consonant
         else if (random < 1.0) {
             character.content = this._consonants[Math.floor(Math.random() * this._consonants.length)];
             character.type = this.types.consonant;
@@ -125,6 +128,11 @@ class CodexClass {
 
         return word;
 
+    }
+
+    randomStatement() {
+        // Return random philosophical statement
+        return this._statements[Math.floor(Math.random() * this._statements.length)];
     }
 
     getCharacterTypeFromString(string = '') {

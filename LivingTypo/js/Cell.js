@@ -20,6 +20,7 @@ class CellClass {
         this._structure = '';
         this._rule = null;
         this._behavior = new BehaviorClass();
+        this._meaning = '';
 
         // Movements
         this._P = new Vector2();
@@ -180,7 +181,7 @@ class CellClass {
                 // Reset behavior required
                 this._behavior.resetRequired();
                 // Print word
-                console.log('word: ' + this._content);
+                console.log('word: ' + this._content + ' | type: ' + this._type);
             }
             // If is a word becoming a sentence
             else if (this._instance === Codex.instances.word) {
@@ -192,8 +193,10 @@ class CellClass {
                 this._rule = null;
                 // Reset behavior required
                 this._behavior.resetRequired();
+                // Get meaning
+                this._meaning = Codex.randomStatement();
                 // Print sentence
-                console.log('sentence: ' + this._content);
+                console.log('sentence: ' + this._content + ' | meaning: ' + this._meaning);
             }
         }
         // Remove potential from all other cells
