@@ -1,4 +1,4 @@
-![Living Typo Preview](./assets/images/preview.png)
+![Living Typo Preview](./assets/images/preview.PNG)
 
 # Living Typo
 
@@ -39,19 +39,19 @@ I couldn't establish them all as it turned out being more complex than it sounds
 
 Some interesting results that came out of this behavioral system that I didn't think about, is that the more advanced an entity is, the harder it is to find love. This eventually makes it low on confidence and unintentionally, this has created an outcome similar to the aging process, where the older a person gets the less active they become.
 
-![Progression #1](./assets/images/progress1.png)
+![Progression #1](./assets/images/progress_1.PNG)
 
-![Progression #2](./assets/images/progress2.png)
+![Progression #2](./assets/images/progress_2.PNG)
 
 During the peer review, I got recommended to remove the numbers and symbols because, even at a low rate of spawning, they were making it weird and too alienating. So I did remove them.
 
 This is where I started tackling the user input. My first idea was to have the user write down some text and the system would try its best to recreate it. However, considering the complexity and time required for this task, I decided to that the input field would only serve as a way to feed the system with your own characters. Thus keeping the interactivity while also being able to modulate the outcome of the system.
 
-![Progression #3](./assets/images/progress3.png)
+![Progression #3](./assets/images/progress_3.PNG)
 
 I thought about adding a random definition for each word, but I couldn't find any effective ways of doing so. So instead, I decided to translate each sentence into random philosophical statements to vaguely associate the newly created language with the English vocabulary while making it more humoristic.
 
-![Progression #4](./assets/images/progress4.png)
+![Progression #4](./assets/images/progress_4.PNG)
 
 After letting my AI work for a bit, I realized that at some point some of the entities' confidence would reach 0 and they would completely abandon every hope of finding a potential, leaving their number of failures to grow infinitely. This brought the idea of implementing crippling depression and suicide as part of the system as we see it with human life, thus giving a cruel sense to my work.
 
