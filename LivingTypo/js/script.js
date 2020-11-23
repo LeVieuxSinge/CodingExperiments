@@ -1,16 +1,16 @@
 /**
  * @name script.js
- * @version v1.0a
+ * @version v1.0.6
  * @author Xavier Champoux / https://www.artstation.com/doldmnk /
  * @description Living Typo.
- * @updated September 20th, 2020.
+ * @updated November 23th, 2020.
  * @license Free
  */
 
 'use strict';
 
 // Version
-const Version = '1.0.5';
+const Version = '1.0.6';
 console.log('LivingTypo Version ' + Version);
 
 // Constants

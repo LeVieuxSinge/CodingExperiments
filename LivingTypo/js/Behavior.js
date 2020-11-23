@@ -1,9 +1,9 @@
 /**
  * @name Behavior.js
- * @version v1.0a
+ * @version v1.0.6
  * @author Xavier Champoux / https://www.artstation.com/doldmnk /
  * @description Living Typo.
- * @updated November 14th, 2020.
+ * @updated November 23th, 2020.
  * @license Free
  */
 
@@ -43,7 +43,7 @@ class BehaviorClass {
         }
 
         // Establish probability based on confidence (Exponential function)
-        var probability = 1 - (0.02 ** this._confidence);
+        var probability = Math.abs(1 - (1.3 * (0.02 ** this._confidence)));
         // Proability scaled from 1% to 10% chance to not find instantly because this request is asked 1000 per second
         var scaledProbability = clampNumberInRange(probability, 0, 1, 0.001, 0.1);
 

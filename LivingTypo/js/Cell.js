@@ -1,9 +1,9 @@
 /**
  * @name Cell.js
- * @version v1.0a
+ * @version v1.0.6
  * @author Xavier Champoux / https://www.artstation.com/doldmnk /
  * @description Living Typo.
- * @updated November 14th, 2020.
+ * @updated November 23th, 2020.
  * @license Free
  */
 

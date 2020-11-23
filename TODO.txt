@@ -1,0 +1,374 @@
+Force Drag System
+
+import math
+
+# ----- TD NODES ----- #
+tracks = op('trackOutput')
+pointOutput = op('pointOutput')
+vertexOutput = op('vertexOutput')
+primOutput = op('primOutput')
+
+# ----- CONST AND GLOBAL VARIABLES ----- #
+VIDEO_RESOLUTION_X = 1280
+VIDEO_RESOLUTION_y = 720
+RESOLUTION_REDUC = 20
+POINTS_SCALE = 20
+POINTS_MASS = 0.9 # Mass of the particles // Not used
+FORCE_AMPLITUDE = 5 # Amplitude of the force field
+FORCE_RADIUS = 50 # Radius of the force field
+VELOCITY_LOSS = 0.98 # Velocity percentage to keep each frame // Not used
+DRAG_FORCE = 1 # Speed at which the particles come back in place
+DRAG_THRESHOLD = 0.2 # Velocity threshold to start draging the particles // Not used
+STOP_DISTANCE = 4 # Distance from initial position to stop the particle
+
+forces = []
+points = []
+updateList = []
+
+# ----- CLASSES ----- #
+class Vector:
+	def __init__(self, x, y, z):
+		self.x = x
+		self.y = y
+		self.z = z
+
+	def dist(self, vector):
+		return math.sqrt( ( ( self.x - vector.x ) ** 2 ) + ( ( self.y - vector.y ) ** 2 ) )
+
+class Force:
+	def __init__(self, P):
+		self.P = P
+		self.lastP = Vector(0, 0, 0)
+
+class Point:
+	def __init__(self, index, P, uv, rest):
+		self.index = index
+		self.P = P
+		self.uv = uv
+		self.v = Vector(0, 0, 0)
+		self.rest = rest
+		self.forceFalloff = 0
+
+# ----- PROGRAM ----- #
+
+def build():
+
+	# ----- CONSTRUCT OUTPUT TABLES ----- #
+
+	# Reset output tables
+	pointOutput.clear(keepFirstRow = True)
+	vertexOutput.clear(keepFirstRow = True)
+	primOutput.clear(keepFirstRow = True)
+
+	# Feed points array and construct ouput table
+	resolutionX = int(VIDEO_RESOLUTION_X / RESOLUTION_REDUC)
+	resolutionY = int(VIDEO_RESOLUTION_y / RESOLUTION_REDUC)
+	spacingX = VIDEO_RESOLUTION_X / resolutionX
+	spacingY = VIDEO_RESOLUTION_y / resolutionY
+	textureU = spacingX / VIDEO_RESOLUTION_X
+	textureV = spacingY / VIDEO_RESOLUTION_y
+	pointIndex = 0
+
+	for y in range(resolutionY):
+		for x in range(resolutionX):
+			# Add point to array
+			points.append(Point(pointIndex, Vector((x * spacingX), (y * spacingY), 0), Vector(x * textureU, y * textureV, 0), Vector((x * spacingX), (y * spacingY), 0)))
+			# Insert index
+			pointOutput.appendRow([ pointIndex, (x * spacingX), (y * spacingY), 0, 1, 0, 0, 1, POINTS_SCALE, 0])
+			# Increment point index
+			pointIndex += 1
+	print('Points array filled with ' + str(len(points)) + ' objects!')
+
+	# Create vertices
+	for p in points:
+		vertexOutput.appendRow([ 0, p.index, p.uv.x, p.uv.y, p.uv.z])
+
+	# Create primitive
+	primOutput.appendRow([ 0, '0-' + str(len(points) - 1) ])
+
+	return
+build()
+	
+def onFrameStart(frame):
+	
+	# ----- UPDATE FORCES OBJECTS AND ARRAY ----- #
+
+	if (tracks.numRows != 1):
+		for rows in range(tracks.numRows):
+			# Neglect first row
+			if (rows > 0):
+				# Get values
+				positionX = tracks[rows, 1] * VIDEO_RESOLUTION_X
+				positionY = tracks[rows, 2] * VIDEO_RESOLUTION_y
+				# Adapt rows for array
+				force = rows - 1
+				# Append array if force is missing
+				if (force >= len(forces)):
+					forces.append(Force(Vector(positionX, positionY, 0)))
+				# Update force if already exists
+				else:
+					forces[force].lastP = forces[force].P
+					forces[force].P = Vector(positionX, positionY, 0)
+
+	# ----- APPLY FORCE ON POINTS ----- #
+
+				# Look for affected points
+				for p in points:
+					# Calculate point distance from force
+					pDistance = p.rest.dist(forces[force].P)
+					# Point inside force radius
+					if (pDistance < FORCE_RADIUS):
+						# Calculate force falloff
+						p.forceFalloff = pDistance / FORCE_RADIUS
+						# Calculate distance between rest and force
+						distanceX = p.rest.x - forces[force].P.x
+						distanceY = p.rest.y - forces[force].P.y
+						distance = math.sqrt( ( distanceX ** 2 ) + ( distanceY ** 2 ) )
+						# Update position
+						p.P.x = p.rest.x + (distanceX * (1 - p.forceFalloff) * FORCE_AMPLITUDE)
+						p.P.y = p.rest.y + (distanceY * (1 - p.forceFalloff) * FORCE_AMPLITUDE)
+						# Add point to update list
+						if p.index in updateList:
+							continue
+						else:
+							updateList.append(p.index)
+
+	# ----- UPDATE POINTS POSITION ----- #
+
+	for i in updateList:
+		# Get point from array
+		p = points[i]
+		# Calculate distance between position and rest
+		distanceX = p.rest.x - p.P.x
+		distanceY = p.rest.y - p.P.y
+		distance = math.sqrt( ( distanceX ** 2 ) + ( distanceY ** 2 ) )
+		# Make sure distance is not 0
+		if (distance > 0.0):
+			# Get normalized direction
+			direction = Vector((distanceX / distance), (distanceY / distance), 0 )
+			# Calculate force falloff
+			p.forceFalloff = distance / FORCE_RADIUS
+			# Calculate scale
+			p.scale = POINTS_SCALE + (POINTS_SCALE * p.forceFalloff)
+			# Update velocity
+			p.v.x = DRAG_FORCE * direction.x
+			p.v.y = DRAG_FORCE * direction.y
+			# Stop particles from moving when close enough
+			if (distance < STOP_DISTANCE):
+				p.P.x = p.rest.x
+				p.P.y = p.rest.y
+				p.v = Vector(0, 0, 0)
+				p.forceFalloff = 0
+				updateList.remove(i)
+			# Update position
+			p.P.x += p.v.x
+			p.P.y += p.v.y
+			# Update point ouput
+			# Get row
+			row = p.index + 1
+			# Update Table
+			pointOutput[row, 1] = p.P.x
+			pointOutput[row, 2] = p.P.y
+			pointOutput[row, 8] = p.scale
+			pointOutput[row, 9] = p.forceFalloff
+
+	return
+
+--------------------------------------------------------------------------
+
+Force Push System
+
+import math
+
+# ----- TD NODES ----- #
+tracks = op('trackOutput')
+pointOutput = op('pointOutput')
+vertexOutput = op('vertexOutput')
+primOutput = op('primOutput')
+
+# ----- CONST AND GLOBAL VARIABLES ----- #
+VIDEO_RESOLUTION_X = 1280
+VIDEO_RESOLUTION_y = 720
+RESOLUTION_REDUC = 20
+POINTS_SCALE = 20
+POINTS_MASS = 0.5 # Mass of the particles
+FORCE_AMPLITUDE = 5 # Amplitude of the force field
+FORCE_RADIUS = 50 # Radius of the force field
+VELOCITY_LOSS = 0.9 # Velocity percentage to keep each frame
+DRAG_FORCE = 2 # Speed at which the particles come back in place
+DRAG_THRESHOLD = 0.2 # Velocity threshold to start draging the particles
+STOP_DISTANCE = 4 # Distance from initial position to stop the particle
+
+forces = []
+points = []
+updateList = []
+
+# ----- CLASSES ----- #
+class Vector:
+	def __init__(self, x, y, z):
+		self.x = x
+		self.y = y
+		self.z = z
+
+	def dist(self, vector):
+		return math.sqrt( ( ( self.x - vector.x ) ** 2 ) + ( ( self.y - vector.y ) ** 2 ) )
+
+class Force:
+	def __init__(self, P):
+		self.P = P
+		self.lastP = Vector(0, 0, 0)
+		self.distance = 0
+		self.ampX = 0
+		self.ampY = 0
+
+	def CalculateDistance(self):
+		self.distance = self.P.dist(self.lastP)
+
+	def CalculateAmplitude(self):
+		if (self.distance != 0.0):
+			self.ampX = (self.P.x - self.lastP.x) / self.distance
+			self.ampY = (self.P.y - self.lastP.y) / self.distance
+
+class Point:
+	def __init__(self, index, P, uv, rest):
+		self.index = index
+		self.P = P
+		self.uv = uv
+		self.v = Vector(0, 0, 0)
+		self.rest = rest
+		self.forceFalloff = 0
+		self.drag = 0
+
+# ----- PROGRAM ----- #
+
+def build():
+
+	# ----- CONSTRUCT OUTPUT TABLES ----- #
+
+	# Reset output tables
+	pointOutput.clear(keepFirstRow = True)
+	vertexOutput.clear(keepFirstRow = True)
+	primOutput.clear(keepFirstRow = True)
+
+	# Feed points array and construct ouput table
+	resolutionX = int(VIDEO_RESOLUTION_X / RESOLUTION_REDUC)
+	resolutionY = int(VIDEO_RESOLUTION_y / RESOLUTION_REDUC)
+	spacingX = VIDEO_RESOLUTION_X / resolutionX
+	spacingY = VIDEO_RESOLUTION_y / resolutionY
+	textureU = spacingX / VIDEO_RESOLUTION_X
+	textureV = spacingY / VIDEO_RESOLUTION_y
+	pointIndex = 0
+
+	for y in range(resolutionY):
+		for x in range(resolutionX):
+			# Add point to array
+			points.append(Point(pointIndex, Vector((x * spacingX), (y * spacingY), 0), Vector(x * textureU, y * textureV, 0), Vector((x * spacingX), (y * spacingY), 0)))
+			# Insert index
+			pointOutput.appendRow([ pointIndex, (x * spacingX), (y * spacingY), 0, 1, 0, 0, 1, POINTS_SCALE, 0])
+			# Increment point index
+			pointIndex += 1
+	print('Points array filled with ' + str(len(points)) + ' objects!')
+
+	# Create vertices
+	for p in points:
+		vertexOutput.appendRow([ 0, p.index, p.uv.x, p.uv.y, p.uv.z])
+
+	# Create primitive
+	primOutput.appendRow([ 0, '0-' + str(len(points) - 1) ])
+
+	return
+build()
+	
+def onFrameStart(frame):
+	
+	# ----- UPDATE FORCES OBJECTS AND ARRAY ----- #
+
+	if (tracks.numRows != 1):
+		for rows in range(tracks.numRows):
+			# Neglect first row
+			if (rows > 0):
+				# Get values
+				positionX = tracks[rows, 1] * VIDEO_RESOLUTION_X
+				positionY = tracks[rows, 2] * VIDEO_RESOLUTION_y
+				# Adapt rows for array
+				force = rows - 1
+				# Append array if force is missing
+				if (force >= len(forces)):
+					forces.append(Force(Vector(positionX, positionY, 0)))
+				# Update force if already exists
+				else:
+					forces[force].lastP = forces[force].P
+					forces[force].P = Vector(positionX, positionY, 0)
+					forces[force].CalculateDistance()
+					forces[force].CalculateAmplitude()
+
+	# ----- APPLY FORCE ON POINTS ----- #
+
+				# Look for affected points
+				for p in points:
+					# Calculate point distance from force
+					pDistance = p.P.dist(forces[force].P)
+					# Point inside force radius
+					if (pDistance < FORCE_RADIUS):
+						# Remove drag
+						p.drag = 0
+						# Calculate force falloff
+						p.forceFalloff = pDistance / FORCE_RADIUS
+						# Update velocity
+						p.v.x = ((FORCE_AMPLITUDE * forces[force].ampX) / POINTS_MASS) * p.forceFalloff
+						p.v.y = ((FORCE_AMPLITUDE * forces[force].ampY) / POINTS_MASS) * p.forceFalloff
+						# Add point to update list
+						if p.index in updateList:
+							continue
+						else:
+							updateList.append(p.index)
+
+	# ----- UPDATE POINTS POSITION ----- #
+
+	for i in updateList:
+		# Get point from array
+		p = points[i]
+		# Calculate distance between position and rest
+		distanceX = p.rest.x - p.P.x
+		distanceY = p.rest.y - p.P.y
+		distance = math.sqrt( ( distanceX ** 2 ) + ( distanceY ** 2 ) )
+		# Get normalized direction
+		direction = Vector(0, 0, 0)
+		if (distance > 0.0):
+			direction = Vector((distanceX / distance), (distanceY / distance), 0 )
+		# Calculate force falloff
+		p.forceFalloff = distance / FORCE_RADIUS
+		# Calculate scale
+		p.scale = POINTS_SCALE + (POINTS_SCALE * p.forceFalloff)
+		# Update velocity
+		if (p.drag == 0):
+			# Velocity speed is low enough
+			if (p.v.x < DRAG_THRESHOLD and p.v.y < DRAG_THRESHOLD):
+					p.drag = 1
+			# Reduce velocity speed
+			p.v.x *= VELOCITY_LOSS
+			p.v.y *= VELOCITY_LOSS
+		elif (p.drag == 1):
+			# Drag point toward rest position
+			p.v.x = DRAG_FORCE * direction.x
+			p.v.y = DRAG_FORCE * direction.y
+			# Stop particles from moving when close enough
+			if (distance < STOP_DISTANCE):
+				p.P.x = p.rest.x
+				p.P.y = p.rest.y
+				p.v = Vector(0, 0, 0)
+				p.forceFalloff = 0
+				updateList.remove(i)
+		# Update position
+		p.P.x += p.v.x
+		p.P.y += p.v.y
+		# Update point ouput
+		# Get row
+		row = p.index + 1
+		# Update Table
+		pointOutput[row, 1] = p.P.x
+		pointOutput[row, 2] = p.P.y
+		pointOutput[row, 8] = p.scale
+		pointOutput[row, 9] = p.forceFalloff
+
+	return
