@@ -25,8 +25,8 @@ I then did a bit of research about human behaviors and quickly realized that, be
 ``` javascript
 /**
  * How to establish rules for the moving states of the cells?
- * less confident = more roaming
- * more roaming = less search
+ * more confident = more roaming
+ * more roaming = more search
  * more failures = less confident
  * find potential = decrease failures
  * more failures = less strict on required
@@ -59,7 +59,7 @@ Nevermind, I ended up simply adjusting the exponential function so that even if 
 
 ![Program Layout](./assets/images/program_layout.PNG)
 
-_Fun Fact : The sentences look like incomprehensible Star Wars dialogues or, in a more human view, ritual sayings from native people or when trying to chase paranormal entities._
+_Fun Fact : The sentences look like incomprehensible Star Wars dialogues or, in a more human view, ritual sayings from native people or when interacting with paranormal entities._
 
 ---
 
