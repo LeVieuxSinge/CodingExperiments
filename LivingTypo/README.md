@@ -85,7 +85,9 @@ _Fun Fact : The sentences look like incomprehensible Star Wars dialogues or, in 
 ## Team
 
 **Xavier Champoux**
+
 Programmer
+
 [Website](https://levieuxsinge.github.io/portfolio/) |
 [Instagram](https://www.instagram.com/doldmk/?hl=fr) |
 [ArtStation](https://www.artstation.com/doldmnk)
