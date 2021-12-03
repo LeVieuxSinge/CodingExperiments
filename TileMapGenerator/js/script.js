@@ -6,23 +6,22 @@
  * @updated September 20th, 2020.
  * @license Free
  */
-
-'use strict';
+/*jshint esversion: 8 */
 
 const TILE_SHEET_ROWS = 24;
 const TILE_SHEET_COLUMNS = 24;
 const TILE_SIZE = 30;
-const END_MIN_RADIUS = TILE_SIZE * 11;
+const MIN_END_RADIUS = TILE_SIZE * 11;
 const PATH_MIN_TILE = 90;
 
 const DRAW = new P5_GRAPHIC();
 
 var tileSheet;
 var generator;
-var imgRender = false;
-var pathDebug = false;
+var render_image = false;
+var show_path = false;
 
-var _colorWhite = new Color(242, 242, 242, 1);
+var color_white = new Color(242, 242, 242, 1);
 var _colorGrey = new Color(121, 206, 237, 0.1);
 var _colorRed = new Color(214, 85, 71, 1);
 var _colorGreen = new Color(67, 224, 148, 1);
@@ -70,22 +69,16 @@ function setup() {
   // Canvas
   createCanvas(windowWidth, windowHeight);
 
-  // Create tile sheet.
-  tileSheet = new TileSheet({
-    rows: TILE_SHEET_ROWS,
-    columns: TILE_SHEET_COLUMNS,
-    tileSize: TILE_SIZE,
-    P: new Vector2(width / 2, height / 2),
-  });
-  console.log(tileSheet);
-
-  // Create generator.
+  // Create generator object.
   generator = new Generator({
-    input: tileSheet.getTiles(),
-    endMinRadius: END_MIN_RADIUS,
-    pathMinTile: PATH_MIN_TILE,
+    origin: new Vector2(width / 2, height / 2),
+    columns: TILE_SHEET_COLUMNS,
+    rows: TILE_SHEET_ROWS,
+    tile_size: TILE_SIZE,
+    minimum_end_radius: MIN_END_RADIUS,
+    path_minimum_lenth: PATH_MIN_TILE,
   });
-  generator.generate();
+  generator.beginPlay();
 
 }
 
@@ -96,81 +89,81 @@ function draw() {
   background(0);
 
   // Display tiles.
-  tileSheet.getTiles().forEach(t => {
-    DRAW.rectangle(_colorGrey, t.getPosition().x, t.getPosition().y, TILE_SIZE - 5, TILE_SIZE - 5);
+  generator.tiles.forEach(t => {
+    DRAW.rectangle(_colorGrey, t.position.x, t.position.y, TILE_SIZE - 5, TILE_SIZE - 5);
   });
 
   // Draw the path from start to end.
   generator.getPath().forEach(t => {
-    if (imgRender) {
+    if (render_image) {
       switch (t.getType()) {
         case 'empty':
-          DRAW.rectangle(_colorRed, t.getPosition().x, t.getPosition().y, TILE_SIZE - 5, TILE_SIZE - 5, 0);
+          DRAW.rectangle(_colorRed, t.position.x, t.position.y, TILE_SIZE - 5, TILE_SIZE - 5, 0);
           break;
         case 'single':
-          DRAW.image(img_TileStreet_Single, t.getPosition().x, t.getPosition().y, TILE_SIZE - 5, TILE_SIZE - 5, t.getRotation());
+          DRAW.image(img_TileStreet_Single, t.position.x, t.position.y, TILE_SIZE - 5, TILE_SIZE - 5, t.rotation);
           break;
         case 'single_corner_side':
-          DRAW.image(img_TileStreet_SingleCornerSide, t.getPosition().x, t.getPosition().y, TILE_SIZE - 5, TILE_SIZE - 5, t.getRotation());
+          DRAW.image(img_TileStreet_SingleCornerSide, t.position.x, t.position.y, TILE_SIZE - 5, TILE_SIZE - 5, t.rotation);
           break;
         case 'single_corner_right':
-          DRAW.image(img_TileStreet_SingleCornerRight, t.getPosition().x, t.getPosition().y, TILE_SIZE - 5, TILE_SIZE - 5, t.getRotation());
+          DRAW.image(img_TileStreet_SingleCornerRight, t.position.x, t.position.y, TILE_SIZE - 5, TILE_SIZE - 5, t.rotation);
           break;
         case 'single_corner_left':
-          DRAW.image(img_TileStreet_SingleCornerLeft, t.getPosition().x, t.getPosition().y, TILE_SIZE - 5, TILE_SIZE - 5, t.getRotation());
+          DRAW.image(img_TileStreet_SingleCornerLeft, t.position.x, t.position.y, TILE_SIZE - 5, TILE_SIZE - 5, t.rotation);
           break;
         case 'double':
-          DRAW.image(img_TileStreet_Double, t.getPosition().x, t.getPosition().y, TILE_SIZE - 5, TILE_SIZE - 5, t.getRotation());
+          DRAW.image(img_TileStreet_Double, t.position.x, t.position.y, TILE_SIZE - 5, TILE_SIZE - 5, t.rotation);
           break;
         case 'double_corner':
-          DRAW.image(img_TileStreet_DoubleCorner, t.getPosition().x, t.getPosition().y, TILE_SIZE - 5, TILE_SIZE - 5, t.getRotation());
+          DRAW.image(img_TileStreet_DoubleCorner, t.position.x, t.position.y, TILE_SIZE - 5, TILE_SIZE - 5, t.rotation);
           break;
         case 'passage':
-          DRAW.image(img_TileStreet_Passage, t.getPosition().x, t.getPosition().y, TILE_SIZE - 5, TILE_SIZE - 5, t.getRotation());
+          DRAW.image(img_TileStreet_Passage, t.position.x, t.position.y, TILE_SIZE - 5, TILE_SIZE - 5, t.rotation);
           break;
         case 'triple':
-          DRAW.image(img_TileStreet_Triple, t.getPosition().x, t.getPosition().y, TILE_SIZE - 5, TILE_SIZE - 5, t.getRotation());
+          DRAW.image(img_TileStreet_Triple, t.position.x, t.position.y, TILE_SIZE - 5, TILE_SIZE - 5, t.rotation);
           break;
         case 'corner':
-          DRAW.image(img_TileStreet_Corner, t.getPosition().x, t.getPosition().y, TILE_SIZE - 5, TILE_SIZE - 5, t.getRotation());
+          DRAW.image(img_TileStreet_Corner, t.position.x, t.position.y, TILE_SIZE - 5, TILE_SIZE - 5, t.rotation);
           break;
         case 'corner_side':
-          DRAW.image(img_TileStreet_CornerSide, t.getPosition().x, t.getPosition().y, TILE_SIZE - 5, TILE_SIZE - 5, t.getRotation());
+          DRAW.image(img_TileStreet_CornerSide, t.position.x, t.position.y, TILE_SIZE - 5, TILE_SIZE - 5, t.rotation);
           break;
         case 'corner_opposite':
-          DRAW.image(img_TileStreet_CornerOpposite, t.getPosition().x, t.getPosition().y, TILE_SIZE - 5, TILE_SIZE - 5, t.getRotation());
+          DRAW.image(img_TileStreet_CornerOpposite, t.position.x, t.position.y, TILE_SIZE - 5, TILE_SIZE - 5, t.rotation);
           break;
         case 'corner_triple':
-          DRAW.image(img_TileStreet_CornerTriple, t.getPosition().x, t.getPosition().y, TILE_SIZE - 5, TILE_SIZE - 5, t.getRotation());
+          DRAW.image(img_TileStreet_CornerTriple, t.position.x, t.position.y, TILE_SIZE - 5, TILE_SIZE - 5, t.rotation);
           break;
       }
     } else {
-      DRAW.rectangle(_colorRed, t.getPosition().x, t.getPosition().y, TILE_SIZE - 5, TILE_SIZE - 5, t.getRotation());
+      DRAW.rectangle(_colorRed, t.position.x, t.position.y, TILE_SIZE - 5, TILE_SIZE - 5, t.rotation);
     }
   });
 
   // Draw the path edges.
   generator.getPathOuter().forEach(t => {
     if (t.getCategory() === 'bounds') {
-      DRAW.rectangle(_colorDarkBlue, t.getPosition().x, t.getPosition().y, TILE_SIZE - 5, TILE_SIZE - 5);
+      DRAW.rectangle(_colorDarkBlue, t.position.x, t.position.y, TILE_SIZE - 5, TILE_SIZE - 5);
     } else if (t.getCategory() === 'buildings') {
-      if (imgRender) {
-        DRAW.image(img_TileBuilding_House, t.getPosition().x, t.getPosition().y, TILE_SIZE - 5, TILE_SIZE - 5, t.getRotation());
+      if (render_image) {
+        DRAW.image(img_TileBuilding_House, t.position.x, t.position.y, TILE_SIZE - 5, TILE_SIZE - 5, t.rotation);
       } else {
-        DRAW.rectangle(_colorBlue, t.getPosition().x, t.getPosition().y, TILE_SIZE - 5, TILE_SIZE - 5, t.getRotation());
+        DRAW.rectangle(_colorBlue, t.position.x, t.position.y, TILE_SIZE - 5, TILE_SIZE - 5, t.rotation);
       }
     }
   });
 
   // Draw the path debug from start to end.
-  if (pathDebug) {
+  if (show_path) {
     generator.getPathDebug().forEach(t => {
-      DRAW.line(_colorWhite, t.p1, t.p2, 1);
+      DRAW.line(color_white, t.p1, t.p2, 1);
     });
     // Draw starting tile.
-    DRAW.rectangle(_colorWhite, generator._startTile.getPosition().x, generator._startTile.getPosition().y, TILE_SIZE - 10, TILE_SIZE - 10);
+    DRAW.rectangle(color_white, generator._startTile.position.x, generator._startTile.position.y, TILE_SIZE - 10, TILE_SIZE - 10);
     // Draw ending tile.
-    DRAW.rectangle(_colorGreen, generator._endTile.getPosition().x, generator._endTile.getPosition().y, TILE_SIZE - 10, TILE_SIZE - 10);
+    DRAW.rectangle(_colorGreen, generator._endTile.position.x, generator._endTile.position.y, TILE_SIZE - 10, TILE_SIZE - 10);
   }
 
 }
@@ -181,11 +174,11 @@ function keyReleased() {
   keyCode === 32 ? generator.generate() : null;
   // Toggle path debug.
   if (keyCode === 80) {
-    pathDebug ? pathDebug = false : pathDebug = true;
+    show_path = !show_path;
   }
   // Toggle path debug.
   if (keyCode === 73) {
-    imgRender ? imgRender = false : imgRender = true;
+    render_image = !render_image;
   }
 }
 
@@ -197,8 +190,8 @@ function windowResized() {
 
 // Debugging, get tile infos.
 function mouseClicked() {
-  tileSheet.getTiles().forEach(t => {
-    if (mouseX < t.getPosition().x + (t.getSize() / 2) && mouseX > t.getPosition().x - (t.getSize() / 2) && mouseY < t.getPosition().y + (t.getSize() / 2) && mouseY > t.getPosition().y - (t.getSize() / 2)) {
+  generator.tiles.forEach(t => {
+    if (mouseX < t.position.x + (t.size / 2) && mouseX > t.position.x - (t.size / 2) && mouseY < t.position.y + (t.size / 2) && mouseY > t.position.y - (t.size / 2)) {
       console.log(t);
     }
   });

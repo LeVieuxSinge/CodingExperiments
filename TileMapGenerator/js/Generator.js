@@ -6,138 +6,362 @@
  * @updated September 20th, 2020.
  * @license Free
  */
-
-'use strict';
+/*jshint esversion: 8 */
 
 // end what needs to be done and redo as a node system
 
+/**
+ * GLOBALS
+ */
+
+const TILE_GROUP_START = 0x0;
+const TILE_GROUP_END = 0x1;
+const TILE_GROUP_PATH = 0x2;
+const TILE_GROUP_BOUND = 0x3;
+
+const TILE_CATEGORY_STREET = 0x10;
+const TILE_CATEGORY_BUILDING = 0x10;
+
+/**
+ * UTILS
+ */
+
+/**
+ * CLASSES
+ */
+
+/**
+ * Actor class
+ */
 class Generator {
+    constructor({
+        origin = new Vector2(),
+        columns = 10,
+        rows = 10,
+        tile_size = 50,
+        minimum_end_radius = 10,
+        path_minimum_lenth = 20,
+    }) {
 
-    constructor(params) {
+        // TODO : add a function GenerateLevel()
+        // TODO : add an event on_level_generated called after GenerateMap()
+        // TODO : add a function LoadLevel()
+        // TODO : add an event on_level_loaded called when LoadLevel() is done
+        // TODO : simualte an objet that holds info about a set of streaming levels
 
-        // Data
-        this._input = params.input !== undefined ? params.input : [];
-        this._endMinRadius = params.endMinRadius !== undefined ? params.endMinRadius : 0;
-        this._pathMinTile = params.pathMinTile !== undefined ? params.pathMinTile : 0;
-        this._path = [];
-        this._pathDebug = [];
-        this._pathOuter = [];
-        this._startTile = null;
-        this._endTile = null;
+        // tile sheet
+        this.origin = origin;
+        this.columns = columns;
+        this.rows = rows;
+        this.tile_size = tile_size;
+        this.minimum_end_radius = minimum_end_radius;
+        this.path_minimum_lenth = path_minimum_lenth;
+
+        // array of tiles
+        this.tiles = []; // USED ONLY IN JAVASCRIPT TO DISPLAY THE GRID
+        this.path_tiles = [];
+        this.path_bounds = [];
+        this.path_debug = [];
+
+        // path
+        this.path = [];
+        this.path_bounds = [];
+        this.path_debug = [];
+
+        // tiles
+        this.tile_start = null;
+        this.tile_end = null;
+
+        // bind events
+        // this.on_level_generate_delegate = this.onTileSheetGenerateComplete();
 
     }
 
-    generate() {
+    /**
+     * Public
+     */
+
+    /**
+     * @description Overrides actor begin play
+     */
+    beginPlay() {
+
+        // call to parent begin play
+
+        this.createTileSheet();
+
+    }
+
+    createTileSheet() {
+
+        /**
+         * Create the tile sheet
+         */
 
         // Debugging.
-        var _timerStart = performance.now();
-        console.log('Generator Started...');
+        console.log('Creating Tile Sheet...');
 
-        // Clean arrays.
-        this._path = [];
-        this._pathDebug = [];
-        this._pathOuter = [];
+        // get tile sheet center point
+        // performs a different operation if input is even
+        var center_x = 0;
+        var center_y = 0;
 
-        // Clean input. Because tiles are referenced, their base values are changed. Thus misleading the generator.
-        this._input.forEach(t => {
+        this.rows % 2 == 0 ? center_y = (this.tile_size * (this.rows / 2)) - this.tile_size / 2 : center_y = this.tile_size * (this.rows / 2);
+        this.columns % 2 == 0 ? center_x = (this.tile_size * (this.columns / 2)) - this.tile_size / 2 : center_x = this.tile_size * (this.columns / 2);
+
+        // assign index to tile for faster sorting
+        var next_index = 0;
+
+        // create tile sheet
+        // for each Y (rows) and X (columns)
+        for (var y = 0; y < this.rows; y++) {
+            for (var x = 0; x < this.columns; x++) {
+
+                // create new position for tile
+                var position = {
+                    x: this.tile_size * x,
+                    y: this.tile_size * y,
+                };
+
+                // displace every tile using center point so that the tile sheet is centered on its origin (0,0)
+                position.x -= center_x;
+                position.y -= center_y;
+
+                // check if playable.
+                // if position on edge (first and last rows || first and last columns)
+                var playable = false;
+                if (y == 0 || y == (this.rows - 1) || x == 0 || x == (this.columns - 1)) {
+                    playable = false;
+                } else {
+                    playable = true;
+                }
+
+                // add tile
+                this.tiles.push(new Tile({
+                    index: next_index,
+                    position: new Vector2(position.x, position.y),
+                    size: this._tile_size,
+                    can_be_playable: playable,
+                }));
+
+                // update next index.
+                next_index++;
+
+            }
+        }
+
+        // Displace tile sheet to tile sheet origin
+        this.tiles.forEach(t => {
+            t.position.x += this.origin.x;
+            t.position.y += this.origin.y;
+        });
+
+        // Compute adjacent and surrounding tiles.
+        this.tiles.forEach(t => {
+
+            // look top
+            var top = this.tiles.find(f => f.position.equals(t.getTopPosition()));
+            if (top !== undefined) {
+                t.adjacent_tiles.push(top);
+                t.surrounding_tiles.top = top;
+                t.surrounding_tiles.as_array.push(top);
+            }
+
+            // look top right
+            var top_right = this.tiles.find(f => f.position.equals(t.getTopRightPosition()));
+            if (top_right !== undefined) {
+                t.surrounding_tiles.top_right = top_right;
+                t.surrounding_tiles.as_array.push(top_right);
+            }
+
+            // look right
+            var right = this.tiles.find(f => f.position.equals(t.getRightPosition()));
+            if (right !== undefined) {
+                t.adjacent_tiles.push(right);
+                t.surrounding_tiles.right = right;
+                t.surrounding_tiles.as_array.push(right);
+            }
+
+            // look bottom right
+            var bottom_right = this.tiles.find(f => f.position.equals(t.getBottomRightPosition()));
+            if (bottom_right !== undefined) {
+                t.surrounding_tiles.bottom_right = bottom_right;
+                t.surrounding_tiles.as_array.push(bottom_right);
+            }
+
+            // look bottom
+            var bottom = this.tiles.find(f => f.position.equals(t.getBottomPosition()));
+            if (bottom !== undefined) {
+                t.adjacent_tiles.push(bottom);
+                t.surrounding_tiles.bottom = bottom;
+                t.surrounding_tiles.as_array.push(bottom);
+            }
+
+            // look bottom left
+            var bottomLeft = this.tiles.find(f => f.position.equals(t.getBottomLeftPosition()));
+            if (bottomLeft !== undefined) {
+                t.surrounding_tiles.bottomLeft = bottomLeft;
+                t.surrounding_tiles.as_array.push(bottomLeft);
+            }
+
+            // look left
+            var left = this.tiles.find(f => f.position.equals(t.getLeftPosition()));
+            if (left !== undefined) {
+                t.adjacent_tiles.push(left);
+                t.surrounding_tiles.left = left;
+                t.surrounding_tiles.as_array.push(left);
+            }
+
+            // look top right
+            var topLeft = this.tiles.find(f => f.position.equals(t.getTopLeftPosition()));
+            if (topLeft !== undefined) {
+                t.surrounding_tiles.topLeft = topLeft;
+                t.surrounding_tiles.as_array.push(topLeft);
+            }
+
+        });
+
+        // Debugging
+        console.log('Tile Sheet created!', this.tiles);
+
+    }
+
+    computeLevel() {
+
+        /**
+         * Compute the level setup
+         */
+
+        // debugging
+        var timer_start = performance.now();
+        console.log('Computing level ...');
+
+        // clean arrays
+        this.path = [];
+        this.path_bounds = [];
+        this.path_debug = [];
+
+        // clean tiles rendering settings
+        this.tiles.forEach(t => {
             t.reset();
         });
 
-        // Create an array for the playable tiles.
-        var _playableTiles = this._input.filter(t => t.canBePlayable());
+        // create an array for the playable tiles
+        var playable_tiles = this.tiles.filter(t => t.canBePlayable());
 
-        // Select random start tile, set it as used, playable, start category and add to path array.
-        this._startTile = _playableTiles[Math.floor(_playableTiles.length * Math.random() | 0)];
-        this._startTile.setUsed(true);
-        this._startTile.setPlayable(true);
-        this._startTile.setCategory('start');
-        this._path.push(this._startTile);
+        // select random start tile, set it as used, playable, start category and add to path array
+        this.tile_start = playable_tiles[Math.floor(playable_tiles.length * Math.random() | 0)];
+        this.tile_start.used = true;
+        this.tile_start.playable = true;
+        this.tile_start.type = TILE_GROUP_START;
+        this.path.push(this.tile_start);
 
-        // Select random end tile in radius, set it as used, playable and end type.
+        // select random end tile in radius, set it as used, playable and end type
+        var dist;
         do {
-            this._endTile = _playableTiles[Math.floor(_playableTiles.length * Math.random() | 0)];
-            var _dist = this._startTile.getPosition().dist(this._endTile.getPosition());
-        } while (_dist < this._endMinRadius);
-        this._endTile.setUsed(true);
-        this._endTile.setPlayable(true);
-        this._endTile.setCategory('end');
+            this.tile_end = playable_tiles[Math.floor(playable_tiles.length * Math.random() | 0)];
+            dist = this.tile_start.position.dist(this.tile_end.position);
+        } while (dist < this.minimum_end_radius);
+        this.tile_end = true;
+        this.tile_end.playable = true;
+        this.tile_end.type = TILE_GROUP_END;
 
-        // Generate a path from starting point to end point.
-        var _currentTile = this._startTile;
-        var _endTileFound = false;
+        // generate a path from starting point to end point
+        var current_tile = this.tile_start;
+        var tile_end_found = false;
         do {
-            // Get only adjacent playable tiles.
-            var _currentPlayables = _currentTile.getAdjacentTiles().filter(t => t.canBePlayable());
 
-            // Select random tile from playables.
-            var _nextTile = _currentPlayables[Math.floor(_currentPlayables.length * Math.random() | 0)];
+            // get only adjacent playable tiles
+            var current_playables = current_tile.adjacent_tiles.filter(t => t.canBePlayable);
 
-            // Is end tile found.
-            _nextTile.getIndex() === this._endTile.getIndex() ? _endTileFound = true : null;
+            // select random tile from playables
+            var next_tile = current_playables[Math.floor(current_playables.length * Math.random() | 0)];
 
-            // Tile is not already path.
-            if (this._path.find(t => t.getPosition().compare(_nextTile.getPosition())) === undefined) {
-                // If not end tile.
-                if (_nextTile.getCategory() !== 'end') {
-                    // Set it as used, playable and street type.
-                    _nextTile.setUsed(true);
-                    _nextTile.setPlayable(true);
-                    _nextTile.setCategory('street');
+            // is end tile found
+            if (next_tile.index === this.tile_end.index) tile_end_found = true;
+
+            // tile is not already in path
+            if (this.path.find(t => t.position.equals(next_tile.position)) === undefined) {
+
+                // not end tile
+                if (next_tile.type !== TILE_GROUP_END) {
+                    // set it as used, playable and path type
+                    next_tile.used = true;
+                    next_tile.playable = true;
+                    next_tile.type = TILE_GROUP_PATH;
                 }
-                // Add to path array.
-                this._path.push(_nextTile);
-                // Add draw debug line position.
-                this._pathDebug.push({
-                    p1: _currentTile.getPosition(),
-                    p2: _nextTile.getPosition(),
+
+                // add to path array
+                this.path.push(next_tile);
+
+                // add draw debug line position
+                this.path_debug.push({
+                    p1: current_tile.position,
+                    p2: next_tile.position,
                 });
-                // Set next tile as current.                                     
-                _currentTile = _nextTile;
+
+                // set next tile as current                                   
+                current_tile = next_tile;
+
             } else {
-                // Change the random tile selection depending of wheter or not the end tile as been found.
-                if (!_endTileFound) {
-                    // Select closest tile from end.
-                    this._path.forEach(t => {
-                        if (t.getPosition().dist(this._endTile.getPosition()) < _currentTile.getPosition().dist(this._endTile.getPosition())) {
-                            _currentTile = t;
+
+                // change the random tile selection depending of whether or not the end tile as been found
+                if (!tile_end_found) {
+
+                    // select closest tile from end
+                    this.path.forEach(t => {
+                        if (t.position.dist(this.tile_end.position) < current_tile.position.dist(this.tile_end.position)) {
+                            current_tile = t;
                         }
                     });
+
                 } else {
-                    // Select random tile from path.
-                    _currentTile = this._path[Math.floor(this._path.length * Math.random() | 0)];
+
+                    // select random tile from path
+                    current_tile = this.path[Math.floor(this.path.length * Math.random() | 0)];
+
                 }
+
             }
 
-        } while (!_endTileFound || this._path.length < this._pathMinTile);
+        } while (!tile_end_found || this.path.length < this.path_minimum_lenth);
 
-        // Populate path edge array.
-        this._path.forEach(t => {
-            // For each path tile, search in surrounding tiles.
-            t.getSurroundingTiles().asArray.forEach(s => {
-                // If not playable and index is not already in array.
-                if (!s.isPlayable() && this._pathOuter.find(e => e.getIndex() === s.getIndex()) === undefined) {
-                    // Set it as used.
-                    s.setUsed(true);
-                    // Add to outer array.
-                    this._pathOuter.push(s);
+        // populate path bound array
+        this.path.forEach(t => {
+
+            // for each path tile, search in surrounding tiles
+            t.surrounding_tiles.asArray.forEach(s => {
+
+                // not playable and index is not already in array
+                if (!s.playable && !this.path_bounds.contains(s.index)) {
+
+                    // set it as used and bound type
+                    s.used = true;
+                    s.type = TILE_GROUP_BOUND;
+
+                    // add to bounds array.
+                    this.path_bounds.push(s);
+
                 }
+
             });
+
         });
 
-        // Compute edge tile category (buildings, bounds) and add bounds to buildings without bounds.
-        this._pathOuter.forEach(t => {
+        // compute bound tile group (buildings, bounds) and add bounds to buildings without bounds.
+        this.path_bounds.forEach(t => {
 
-            // Get amount of adjacent / surrounding playable tiles.
-            var _playableAdjacents = t.getAdjacentTiles().filter(s => s.isPlayable());
-            var _playableSurroundings = t.getSurroundingTiles().asArray.filter(s => s.isPlayable());
+            // get amount of adjacent / surrounding playable tiles
+            var playable_adjacents = t.adjacent_tiles.filter(s => s.playable);
+            var playable_surroundings = t.surrounding_tiles.asArray.filter(s => s.playable);
 
-            // Tile on edge of map OR Tile surrounded by play tiles OR Tile adjacent with no play tiles = bounds.
-            if (t.getSurroundingTiles().asArray.length <= 5 || _playableAdjacents.length === 4 || _playableAdjacents.length === 0) {
+            // tile on edge of map OR tile surrounded by play tiles OR tile adjacent with no play tiles = bounds.
+            if (playable_surroundings.length <= 5 || playable_adjacents.length === 4 || playable_adjacents.length === 0) {
                 // Set category.
                 t.setCategory('bounds');
             }
             // Tile with one non-playable tile.
-            else if (_playableAdjacents.length === 3) {
+            else if (playable_adjacents.length === 3) {
                 // Look if adjacent non-playable tile as only one adjacent non-playable tile.
                 var _adjacentNonPlayable = t.getAdjacentTiles().find(s => !s.isPlayable());
                 if (_adjacentNonPlayable.getAdjacentTiles().filter(s => !s.isPlayable()).length === 1) {
@@ -414,18 +638,6 @@ class Generator {
         var _timerEnd = performance.now();
         console.log('Map generated in ' + Math.round(((_timerEnd - _timerStart) + Number.EPSILON) * 100) / 100 + ' milliseconds! ');
 
-    }
-
-    getPath() {
-        return this._path;
-    }
-
-    getPathDebug() {
-        return this._pathDebug;
-    }
-
-    getPathOuter() {
-        return this._pathOuter;
     }
 
 }

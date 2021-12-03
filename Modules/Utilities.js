@@ -36,7 +36,20 @@ class Vector2 {
         return Math.sqrt(Math.pow(Math.abs(this.y - Vector2.y), 2) + Math.pow(Math.abs(this.x - Vector2.x), 2));
     }
 
+    /**
+     * @deprecated
+     * @param {*} Vector2 
+     * @returns 
+     */
     compare(Vector2) {
+        if (this.x === Vector2.x && this.y === Vector2.y) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    equals(Vector2) {
         if (this.x === Vector2.x && this.y === Vector2.y) {
             return true;
         } else {
