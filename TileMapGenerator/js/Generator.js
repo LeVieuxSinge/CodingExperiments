@@ -140,7 +140,7 @@ class Generator {
                 this.tiles.push(new Tile({
                     index: next_index,
                     position: new Vector2(position.x, position.y),
-                    size: this._tile_size,
+                    size: this.tile_size,
                     can_be_playable: playable,
                 }));
 
@@ -198,10 +198,10 @@ class Generator {
             }
 
             // look bottom left
-            var bottomLeft = this.tiles.find(f => f.position.equals(t.getBottomLeftPosition()));
-            if (bottomLeft !== undefined) {
-                t.surrounding_tiles.bottomLeft = bottomLeft;
-                t.surrounding_tiles.as_array.push(bottomLeft);
+            var bottom_left = this.tiles.find(f => f.position.equals(t.getBottomLeftPosition()));
+            if (bottom_left !== undefined) {
+                t.surrounding_tiles.bottom_left = bottom_left;
+                t.surrounding_tiles.as_array.push(bottom_left);
             }
 
             // look left
@@ -213,10 +213,10 @@ class Generator {
             }
 
             // look top right
-            var topLeft = this.tiles.find(f => f.position.equals(t.getTopLeftPosition()));
-            if (topLeft !== undefined) {
-                t.surrounding_tiles.topLeft = topLeft;
-                t.surrounding_tiles.as_array.push(topLeft);
+            var top_left = this.tiles.find(f => f.position.equals(t.getTopLeftPosition()));
+            if (top_left !== undefined) {
+                t.surrounding_tiles.top_left = top_left;
+                t.surrounding_tiles.as_array.push(top_left);
             }
 
         });
@@ -247,7 +247,7 @@ class Generator {
         });
 
         // create an array for the playable tiles
-        var playable_tiles = this.tiles.filter(t => t.canBePlayable());
+        var playable_tiles = this.tiles.filter(t => t.can_be_playable);
 
         // select random start tile, set it as used, playable, start category and add to path array
         this.tile_start = playable_tiles[Math.floor(playable_tiles.length * Math.random() | 0)];
@@ -262,7 +262,6 @@ class Generator {
             this.tile_end = playable_tiles[Math.floor(playable_tiles.length * Math.random() | 0)];
             dist = this.tile_start.position.dist(this.tile_end.position);
         } while (dist < this.minimum_end_radius);
-        this.tile_end = true;
         this.tile_end.playable = true;
         this.tile_end.type = TILE_GROUP_END;
 
@@ -270,10 +269,8 @@ class Generator {
         var current_tile = this.tile_start;
         var tile_end_found = false;
         do {
-
             // get only adjacent playable tiles
-            var current_playables = current_tile.adjacent_tiles.filter(t => t.canBePlayable);
-
+            var current_playables = current_tile.adjacent_tiles.filter(t => t.can_be_playable);
             // select random tile from playables
             var next_tile = current_playables[Math.floor(current_playables.length * Math.random() | 0)];
 
@@ -330,10 +327,10 @@ class Generator {
         this.path.forEach(t => {
 
             // for each path tile, search in surrounding tiles
-            t.surrounding_tiles.asArray.forEach(s => {
+            t.surrounding_tiles.as_array.forEach(s => {
 
                 // not playable and index is not already in array
-                if (!s.playable && !this.path_bounds.contains(s.index)) {
+                if (!s.playable && !this.path_bounds.includes(s.index)) {
 
                     // set it as used and bound type
                     s.used = true;
@@ -353,23 +350,23 @@ class Generator {
 
             // get amount of adjacent / surrounding playable tiles
             var playable_adjacents = t.adjacent_tiles.filter(s => s.playable);
-            var playable_surroundings = t.surrounding_tiles.asArray.filter(s => s.playable);
+            var playable_surroundings = t.surrounding_tiles.as_array.filter(s => s.playable);
 
             // tile on edge of map OR tile surrounded by play tiles OR tile adjacent with no play tiles = bounds.
             if (playable_surroundings.length <= 5 || playable_adjacents.length === 4 || playable_adjacents.length === 0) {
                 // Set category.
-                t.setCategory('bounds');
+                t.category = 'bounds';
             }
             // Tile with one non-playable tile.
             else if (playable_adjacents.length === 3) {
                 // Look if adjacent non-playable tile as only one adjacent non-playable tile.
-                var _adjacentNonPlayable = t.getAdjacentTiles().find(s => !s.isPlayable());
-                if (_adjacentNonPlayable.getAdjacentTiles().filter(s => !s.isPlayable()).length === 1) {
+                var _adjacentNonPlayable = t.adjacent_tiles.find(s => !s.playable);
+                if (_adjacentNonPlayable.adjacent_tiles.filter(s => !s.playable).length === 1) {
                     // Set category.
-                    t.setCategory('bounds');
+                    t.category = 'bounds';
                 } else {
                     // Set category.
-                    t.setCategory('buildings');
+                    t.category = 'buildings';
                 }
             }
             // Set random.
@@ -377,19 +374,19 @@ class Generator {
                 var _random = Math.random()
                 // Set category.
                 // 5% bounds, 95% buildings
-                _random < 0.05 ? t.setCategory('bounds') : t.setCategory('buildings');
+                _random < 0.05 ? t.category = 'bounds' : t.category = 'buildings';
             }
 
             // Make sure buildings have bounds.
-            if (t.getCategory() === 'buildings') {
-                t.getAdjacentTiles().forEach(a => {
-                    if (!a.isUsed()) {
+            if (t.category === 'buildings') {
+                t.adjacent_tiles.forEach(a => {
+                    if (!a.used) {
                         // Set it as used.
-                        a.setUsed(true);
+                        a.used = true;
                         // Set category.
-                        a.setCategory('bounds');
+                        a.category = 'bounds';
                         // Add to outer array.
-                        this._pathOuter.push(a);
+                        this.path_bounds.push(a);
                     }
                 });
             }
@@ -400,148 +397,148 @@ class Generator {
         // compute bounds type and rotation
 
         // Compute path tile type.
-        this._path.forEach(t => {
+        this.path.forEach(t => {
 
             // Get number of connections.
-            var _connections = t.getAdjacentTiles().filter(a => a.isPlayable()).length;
+            var _connections = t.adjacent_tiles.filter(a => a.playable).length;
 
             // Tile has one opening = triple.
             if (_connections === 1) {
                 // Set type.
-                t.setType('triple');
+                t.type = 'triple';
                 // Check which position opening is at.
-                if (t.getSurroundingTiles().top.isPlayable()) {
+                if (t.surrounding_tiles.top.playable) {
                     // Set rotation.
-                    t.setRotation(180);
-                } else if (t.getSurroundingTiles().right.isPlayable()) {
+                    t.rotation = 180;
+                } else if (t.surrounding_tiles.right.playable) {
                     // Set rotation.
-                    t.setRotation(270);
-                } else if (t.getSurroundingTiles().bottom.isPlayable()) {
+                    t.rotation = 270;
+                } else if (t.surrounding_tiles.bottom.playable) {
                     // Set rotation.
-                    t.setRotation(0);
-                } else if (t.getSurroundingTiles().left.isPlayable()) {
+                    t.rotation = 0;
+                } else if (t.surrounding_tiles.left.playable) {
                     // Set rotation.
-                    t.setRotation(90);
+                    t.rotation = 90;
                 }
             }
             // Tile has two openings = double, double corner, passage.
             else if (_connections === 2) {
                 // Check which position opening is at.
-                if (t.getSurroundingTiles().top.isPlayable() && t.getSurroundingTiles().bottom.isPlayable()) {
+                if (t.surrounding_tiles.top.playable && t.surrounding_tiles.bottom.playable) {
                     // Set type.
-                    t.setType('passage');
+                    t.type = 'passage';
                     // Set rotation.
-                    t.setRotation(90);
-                } else if (t.getSurroundingTiles().right.isPlayable() && t.getSurroundingTiles().left.isPlayable()) {
+                    t.rotation = 90;
+                } else if (t.surrounding_tiles.right.playable && t.surrounding_tiles.left.playable) {
                     // Set type.
-                    t.setType('passage');
+                    t.type = 'passage';
                     // Set rotation.
-                    t.setRotation(0);
-                } else if (t.getSurroundingTiles().top.isPlayable() && t.getSurroundingTiles().right.isPlayable()) {
+                    t.rotation = 0;
+                } else if (t.surrounding_tiles.top.playable && t.surrounding_tiles.right.playable) {
                     // Set type.
-                    t.setType('double');
+                    t.type = 'double';
                     // Set rotation.
-                    t.setRotation(270);
+                    t.rotation = 270;
                     // Check for corners.
-                    if (!t.getSurroundingTiles().topRight.isPlayable()) {
+                    if (!t.surrounding_tiles.top_right.playable) {
                         // Set type.
-                        t.setType('double_corner');
+                        t.type = 'double_corner';
                     }
-                } else if (t.getSurroundingTiles().right.isPlayable() && t.getSurroundingTiles().bottom.isPlayable()) {
+                } else if (t.surrounding_tiles.right.playable && t.surrounding_tiles.bottom.playable) {
                     // Set type.
-                    t.setType('double');
+                    t.type = 'double';
                     // Set rotation.
-                    t.setRotation(0);
-                    if (!t.getSurroundingTiles().bottomRight.isPlayable()) {
+                    t.rotation = 0;
+                    if (!t.surrounding_tiles.bottom_right.playable) {
                         // Set type.
-                        t.setType('double_corner');
+                        t.type = 'double_corner';
                     }
-                } else if (t.getSurroundingTiles().bottom.isPlayable() && t.getSurroundingTiles().left.isPlayable()) {
+                } else if (t.surrounding_tiles.bottom.playable && t.surrounding_tiles.left.playable) {
                     // Set type.
-                    t.setType('double');
+                    t.type = 'double';
                     // Set rotation.
-                    t.setRotation(90);
-                    if (!t.getSurroundingTiles().bottomLeft.isPlayable()) {
+                    t.rotation = 90;
+                    if (!t.surrounding_tiles.bottom_left.playable) {
                         // Set type.
-                        t.setType('double_corner');
+                        t.type = 'double_corner';
                     }
-                } else if (t.getSurroundingTiles().left.isPlayable() && t.getSurroundingTiles().top.isPlayable()) {
+                } else if (t.surrounding_tiles.left.playable && t.surrounding_tiles.top.playable) {
                     // Set type.
-                    t.setType('double');
+                    t.type = 'double';
                     // Set rotation.
-                    t.setRotation(180);
-                    if (!t.getSurroundingTiles().topLeft.isPlayable()) {
+                    t.rotation = 180;
+                    if (!t.surrounding_tiles.top_left.playable) {
                         // Set type.
-                        t.setType('double_corner');
+                        t.type = 'double_corner';
                     }
                 }
             }
             // Tile has three openings = single, single corner right, single corner left, single corner side.
             else if (_connections === 3) {
                 // Check which position opening is at.
-                if (t.getSurroundingTiles().top.isPlayable() && t.getSurroundingTiles().right.isPlayable() && t.getSurroundingTiles().bottom.isPlayable()) {
+                if (t.surrounding_tiles.top.playable && t.surrounding_tiles.right.playable && t.surrounding_tiles.bottom.playable) {
                     // Set type.
-                    t.setType('single');
+                    t.type = 'single';
                     // Set rotation.
-                    t.setRotation(270);
+                    t.rotation = (270);
                     // Check for corners.
-                    if (!t.getSurroundingTiles().topRight.isPlayable() && !t.getSurroundingTiles().bottomRight.isPlayable()) {
+                    if (!t.surrounding_tiles.top_right.playable && !t.surrounding_tiles.bottom_right.playable) {
                         // Set type.
-                        t.setType('single_corner_side');
-                    } else if (!t.getSurroundingTiles().topRight.isPlayable()) {
+                        t.type = 'single_corner_side';
+                    } else if (!t.surrounding_tiles.top_right.playable) {
                         // Set type.
-                        t.setType('single_corner_right');
-                    } else if (!t.getSurroundingTiles().bottomRight.isPlayable()) {
+                        t.type = 'single_corner_right';
+                    } else if (!t.surrounding_tiles.bottom_right.playable) {
                         // Set type.
-                        t.setType('single_corner_left');
+                        t.type = 'single_corner_left';
                     }
-                } else if (t.getSurroundingTiles().right.isPlayable() && t.getSurroundingTiles().bottom.isPlayable() && t.getSurroundingTiles().left.isPlayable()) {
+                } else if (t.surrounding_tiles.right.playable && t.surrounding_tiles.bottom.playable && t.surrounding_tiles.left.playable) {
                     // Set type.
-                    t.setType('single');
+                    t.type = 'single';
                     // Set rotation.
-                    t.setRotation(0);
+                    t.rotation = 0;
                     // Check for corners.
-                    if (!t.getSurroundingTiles().bottomRight.isPlayable() && !t.getSurroundingTiles().bottomLeft.isPlayable()) {
+                    if (!t.surrounding_tiles.bottom_right.playable && !t.surrounding_tiles.bottom_left.playable) {
                         // Set type.
-                        t.setType('single_corner_side');
-                    } else if (!t.getSurroundingTiles().bottomRight.isPlayable()) {
+                        t.type = 'single_corner_side';
+                    } else if (!t.surrounding_tiles.bottom_right.playable) {
                         // Set type.
-                        t.setType('single_corner_right');
-                    } else if (!t.getSurroundingTiles().bottomLeft.isPlayable()) {
+                        t.type = 'single_corner_right';
+                    } else if (!t.surrounding_tiles.bottom_left.playable) {
                         // Set type.
-                        t.setType('single_corner_left');
+                        t.type = 'single_corner_left';
                     }
-                } else if (t.getSurroundingTiles().bottom.isPlayable() && t.getSurroundingTiles().left.isPlayable() && t.getSurroundingTiles().top.isPlayable()) {
+                } else if (t.surrounding_tiles.bottom.playable && t.surrounding_tiles.left.playable && t.surrounding_tiles.top.playable) {
                     // Set type.
-                    t.setType('single');
+                    t.type = 'single';
                     // Set rotation.
-                    t.setRotation(90);
+                    t.rotation = 90;
                     // Check for corners.
-                    if (!t.getSurroundingTiles().bottomLeft.isPlayable() && !t.getSurroundingTiles().topLeft.isPlayable()) {
+                    if (!t.surrounding_tiles.bottom_left.playable && !t.surrounding_tiles.top_left.playable) {
                         // Set type.
-                        t.setType('single_corner_side');
-                    } else if (!t.getSurroundingTiles().bottomLeft.isPlayable()) {
+                        t.type = 'single_corner_side';
+                    } else if (!t.surrounding_tiles.bottom_left.playable) {
                         // Set type.
-                        t.setType('single_corner_right');
-                    } else if (!t.getSurroundingTiles().topLeft.isPlayable()) {
+                        t.type = 'single_corner_right';
+                    } else if (!t.surrounding_tiles.top_left.playable) {
                         // Set type.
-                        t.setType('single_corner_left');
+                        t.type = 'single_corner_left';
                     }
-                } else if (t.getSurroundingTiles().left.isPlayable() && t.getSurroundingTiles().top.isPlayable() && t.getSurroundingTiles().right.isPlayable()) {
+                } else if (t.surrounding_tiles.left.playable && t.surrounding_tiles.top.playable && t.surrounding_tiles.right.playable) {
                     // Set type.
-                    t.setType('single');
+                    t.type = 'single';
                     // Set rotation.
-                    t.setRotation(180);
+                    t.rotation = 180;
                     // Check for corners.
-                    if (!t.getSurroundingTiles().topLeft.isPlayable() && !t.getSurroundingTiles().topRight.isPlayable()) {
+                    if (!t.surrounding_tiles.top_left.playable && !t.surrounding_tiles.top_right.playable) {
                         // Set type.
-                        t.setType('single_corner_side');
-                    } else if (!t.getSurroundingTiles().topLeft.isPlayable()) {
+                        t.type = 'single_corner_side';
+                    } else if (!t.surrounding_tiles.top_left.playable) {
                         // Set type.
-                        t.setType('single_corner_right');
-                    } else if (!t.getSurroundingTiles().topRight.isPlayable()) {
+                        t.type = 'single_corner_right';
+                    } else if (!t.surrounding_tiles.top_right.playable) {
                         // Set type.
-                        t.setType('single_corner_left');
+                        t.type = 'single_corner_left';
                     }
                 }
             }
@@ -549,85 +546,85 @@ class Generator {
             else if (_connections === 4) {
                 // Check which position corner is at.
                 // Skip if no non-playable tile around.
-                if (t.getSurroundingTiles().asArray.find(s => !s.isPlayable()) === undefined) {
+                if (t.surrounding_tiles.as_array.find(s => !s.playable) === undefined) {
                     // Set type.
-                    t.setType('empty');
+                    t.type = 'empty';
                 } else {
-                    if (!t.getSurroundingTiles().topLeft.isPlayable() && !t.getSurroundingTiles().topRight.isPlayable()) {
+                    if (!t.surrounding_tiles.top_left.playable && !t.surrounding_tiles.top_right.playable) {
                         // Set type.
-                        t.setType('corner_side');
+                        t.type = 'corner_side';
                         // Set rotation.
-                        t.setRotation(0);
-                    } else if (!t.getSurroundingTiles().topRight.isPlayable() && !t.getSurroundingTiles().bottomRight.isPlayable()) {
+                        t.rotation = 0;
+                    } else if (!t.surrounding_tiles.top_right.playable && !t.surrounding_tiles.bottom_right.playable) {
                         // Set type.
-                        t.setType('corner_side');
+                        t.type = 'corner_side';
                         // Set rotation.
-                        t.setRotation(90);
-                    } else if (!t.getSurroundingTiles().bottomRight.isPlayable() && !t.getSurroundingTiles().bottomLeft.isPlayable()) {
+                        t.rotation = 90;
+                    } else if (!t.surrounding_tiles.bottom_right.playable && !t.surrounding_tiles.bottom_left.playable) {
                         // Set type.
-                        t.setType('corner_side');
+                        t.type = 'corner_side';
                         // Set rotation.
-                        t.setRotation(180);
-                    } else if (!t.getSurroundingTiles().bottomLeft.isPlayable() && !t.getSurroundingTiles().topLeft.isPlayable()) {
+                        t.rotation = 180;
+                    } else if (!t.surrounding_tiles.bottom_left.playable && !t.surrounding_tiles.top_left.playable) {
                         // Set type.
-                        t.setType('corner_side');
+                        t.type = 'corner_side';
                         // Set rotation.
-                        t.setRotation(270);
-                    } else if (!t.getSurroundingTiles().topLeft.isPlayable() && !t.getSurroundingTiles().bottomRight.isPlayable()) {
+                        t.rotation = 270;
+                    } else if (!t.surrounding_tiles.top_left.playable && !t.surrounding_tiles.bottom_right.playable) {
                         // Set type.
-                        t.setType('corner_opposite');
+                        t.type = 'corner_opposite';
                         // Set rotation.
-                        t.setRotation(0);
-                    } else if (!t.getSurroundingTiles().topRight.isPlayable() && !t.getSurroundingTiles().bottomLeft.isPlayable()) {
+                        t.rotation = 0;
+                    } else if (!t.surrounding_tiles.top_right.playable && !t.surrounding_tiles.bottom_left.playable) {
                         // Set type.
-                        t.setType('corner_opposite');
+                        t.type = 'corner_opposite';
                         // Set rotation.
-                        t.setRotation(90);
-                    } else if (!t.getSurroundingTiles().topRight.isPlayable() && !t.getSurroundingTiles().bottomLeft.isPlayable()) {
+                        t.rotation = 90;
+                    } else if (!t.surrounding_tiles.top_right.playable && !t.surrounding_tiles.bottom_left.playable) {
                         // Set type.
-                        t.setType('corner_opposite');
+                        t.type = 'corner_opposite';
                         // Set rotation.
-                        t.setRotation(90);
-                    } else if (!t.getSurroundingTiles().topLeft.isPlayable()) {
+                        t.rotation = 90;
+                    } else if (!t.surrounding_tiles.top_left.playable) {
                         // Set type.
-                        t.setType('corner');
+                        t.type = 'corner';
                         // Set rotation.
-                        t.setRotation(0);
-                    } else if (!t.getSurroundingTiles().topRight.isPlayable()) {
+                        t.rotation = 0;
+                    } else if (!t.surrounding_tiles.top_right.playable) {
                         // Set type.
-                        t.setType('corner');
+                        t.type = 'corner';
                         // Set rotation.
-                        t.setRotation(90);
-                    } else if (!t.getSurroundingTiles().bottomRight.isPlayable()) {
+                        t.rotation = 90;
+                    } else if (!t.surrounding_tiles.bottom_right.playable) {
                         // Set type.
-                        t.setType('corner');
+                        t.type = 'corner';
                         // Set rotation.
-                        t.setRotation(180);
-                    } else if (!t.getSurroundingTiles().bottomLeft.isPlayable()) {
+                        t.rotation = 180;
+                    } else if (!t.surrounding_tiles.bottom_left.playable) {
                         // Set type.
-                        t.setType('corner');
+                        t.type = 'corner';
                         // Set rotation.
-                        t.setRotation(270);
-                    } else if (t.getSurroundingTiles().bottomRight.isPlayable()) {
+                        t.rotation = 270;
+                    } else if (t.surrounding_tiles.bottom_right.playable) {
                         // Set type.
-                        t.setType('corner_triple');
+                        t.type = 'corner_triple';
                         // Set rotation.
-                        t.setRotation(0);
-                    } else if (t.getSurroundingTiles().bottomLeft.isPlayable()) {
+                        t.rotation = 0;
+                    } else if (t.surrounding_tiles.bottom_left.playable) {
                         // Set type.
-                        t.setType('corner_triple');
+                        t.type = 'corner_triple';
                         // Set rotation.
-                        t.setRotation(90);
-                    } else if (t.getSurroundingTiles().topLeft.isPlayable()) {
+                        t.rotation = 90;
+                    } else if (t.surrounding_tiles.top_left.playable) {
                         // Set type.
-                        t.setType('corner_triple');
+                        t.type = 'corner_triple';
                         // Set rotation.
-                        t.setRotation(180);
-                    } else if (t.getSurroundingTiles().topRight.isPlayable()) {
+                        t.rotation = 180;
+                    } else if (t.surrounding_tiles.top_right.playable) {
                         // Set type.
-                        t.setType('corner_triple');
+                        t.type = 'corner_triple';
                         // Set rotation.
-                        t.setRotation(270);
+                        t.rotation = 270;
                     }
                 }
             }
@@ -636,7 +633,7 @@ class Generator {
 
         // Debugging.
         var _timerEnd = performance.now();
-        console.log('Map generated in ' + Math.round(((_timerEnd - _timerStart) + Number.EPSILON) * 100) / 100 + ' milliseconds! ');
+        console.log('Map generated in ' + Math.round(((_timerEnd - timer_start) + Number.EPSILON) * 100) / 100 + ' milliseconds! ');
 
     }
 

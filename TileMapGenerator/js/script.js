@@ -94,9 +94,9 @@ function draw() {
   });
 
   // Draw the path from start to end.
-  generator.getPath().forEach(t => {
+  generator.path.forEach(t => {
     if (render_image) {
-      switch (t.getType()) {
+      switch (t.type) {
         case 'empty':
           DRAW.rectangle(_colorRed, t.position.x, t.position.y, TILE_SIZE - 5, TILE_SIZE - 5, 0);
           break;
@@ -143,10 +143,10 @@ function draw() {
   });
 
   // Draw the path edges.
-  generator.getPathOuter().forEach(t => {
-    if (t.getCategory() === 'bounds') {
+  generator.path_bounds.forEach(t => {
+    if (t.category === 'bounds') {
       DRAW.rectangle(_colorDarkBlue, t.position.x, t.position.y, TILE_SIZE - 5, TILE_SIZE - 5);
-    } else if (t.getCategory() === 'buildings') {
+    } else if (t.category === 'buildings') {
       if (render_image) {
         DRAW.image(img_TileBuilding_House, t.position.x, t.position.y, TILE_SIZE - 5, TILE_SIZE - 5, t.rotation);
       } else {
@@ -157,13 +157,13 @@ function draw() {
 
   // Draw the path debug from start to end.
   if (show_path) {
-    generator.getPathDebug().forEach(t => {
+    generator.path_debug.forEach(t => {
       DRAW.line(color_white, t.p1, t.p2, 1);
     });
     // Draw starting tile.
-    DRAW.rectangle(color_white, generator._startTile.position.x, generator._startTile.position.y, TILE_SIZE - 10, TILE_SIZE - 10);
+    DRAW.rectangle(color_white, generator.tile_start.position.x, generator.tile_start.position.y, TILE_SIZE - 10, TILE_SIZE - 10);
     // Draw ending tile.
-    DRAW.rectangle(_colorGreen, generator._endTile.position.x, generator._endTile.position.y, TILE_SIZE - 10, TILE_SIZE - 10);
+    DRAW.rectangle(_colorGreen, generator.tile_end.position.x, generator.tile_end.position.y, TILE_SIZE - 10, TILE_SIZE - 10);
   }
 
 }
@@ -171,7 +171,7 @@ function draw() {
 // Handle key inputs.
 function keyReleased() {
   // Space to generate new map.
-  keyCode === 32 ? generator.generate() : null;
+  keyCode === 32 ? generator.computeLevel() : null;
   // Toggle path debug.
   if (keyCode === 80) {
     show_path = !show_path;

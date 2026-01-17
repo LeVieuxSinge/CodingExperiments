@@ -62,7 +62,7 @@ class Tile {
             y: this.position.y - this.size,
         };
     }
-    getTopRightPosition() {
+    getTopRightPosition() {
         return {
             x: this.position.x + this.size,
             y: this.position.y - this.size,
